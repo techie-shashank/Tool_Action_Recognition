@@ -1,0 +1,4 @@
+scikit-learn
+seglearn
+numpy>=1.18
+tqdm>=4.44
