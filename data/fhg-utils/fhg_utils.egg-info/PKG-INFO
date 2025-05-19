@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: fhg-utils
+Version: 0.1.0
+Summary: Util classes and functions for working with the tool tracking data
+Maintainer: wllr
+Requires-Dist: scikit-learn
+Requires-Dist: seglearn
+Requires-Dist: numpy>=1.18
+Requires-Dist: tqdm>=4.44
+Dynamic: maintainer
+Dynamic: requires-dist
+Dynamic: summary

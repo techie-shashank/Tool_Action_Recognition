@@ -1,1 +1,7 @@
-/data/
+/data/tool-tracking-data/
+/src/__pycache__/
+.idea/
+experiments/
+.vscode/
+/venv/
+/archive/
