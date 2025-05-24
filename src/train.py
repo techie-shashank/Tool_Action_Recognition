@@ -8,8 +8,9 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 from data.dataset import ToolTrackingWindowDataset
-from src.data.loader import ToolTrackingDataLoader
-from src.models.fcn import FCNClassifier
+from data.loader import ToolTrackingDataLoader
+from models.fcn import FCNClassifier
+from models.lstm import LSTMClassifier
 from fhgutils import filter_labels, one_label_per_window
 from sklearn.preprocessing import LabelEncoder
 from datetime import datetime
@@ -17,7 +18,7 @@ from datetime import datetime
 
 # Parse command line args
 parser = argparse.ArgumentParser()
-parser.add_argument("--model", type=str, required=True, help="Model name")
+parser.add_argument("--model", type=str, required=True, choices=["fcn", "lstm"], help="Model type")
 parser.add_argument("--tool", type=str, required=True, help="Tool to filter data")
 parser.add_argument("--sensor", type=str, required=True, help="Sensor filter for data")
 args = parser.parse_args()
@@ -44,8 +45,7 @@ shutil.copy(config_path, os.path.join(experiment_dir, "config.json"))
 log_path = os.path.join(experiment_dir, "training.log")
 model_path = os.path.join(experiment_dir, "model.pt")
 
-
-# ---------------------- Set Up Logging ----------------------
+# ---------------------- Logging ----------------------
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s",
@@ -55,6 +55,7 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
 
 # ---------------------- Training Function ----------------------
 def train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=10):
@@ -102,6 +103,8 @@ Xt_f, Xc_f, y_f = filter_labels(labels=[-1], Xt=Xt, Xc=Xc, y=y)
 y_f = one_label_per_window(y=y_f)
 le = LabelEncoder()
 y_f = le.fit_transform(y_f)
+# Remove timestamp
+X_f = Xt_f[:,:,1:]
 
 # Remove timestamp
 X_f = Xt_f[:,:,1:]
@@ -129,11 +132,20 @@ time_steps = sample_X.shape[0]
 input_channels = sample_X.shape[1]
 num_classes = len(le.classes_)
 
-model = FCNClassifier(input_channels, time_steps, num_classes).to(device)
+if args.model.lower() == "fcn":
+    model = FCNClassifier(input_channels, time_steps, num_classes).to(device)
+elif args.model.lower() == "lstm":
+    model = LSTMClassifier(input_channels=input_channels,
+                           time_steps=time_steps,
+                           num_classes=num_classes).to(device)
+else:
+    raise ValueError(f"Unsupported model type: {args.model}")
+
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-logger.info("Starting training...")
+# ---------------------- Train ----------------------
+logger.info(f"Starting training for model: {args.model.upper()}")
 train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=epochs)
 
 # ---------------------- Optional: Save Model ----------------------

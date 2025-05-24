@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader, random_split
 from data.loader import ToolTrackingDataLoader
 from data.dataset import ToolTrackingWindowDataset
 from models.fcn import FCNClassifier
+from models.lstm import LSTMClassifier
 from sklearn.preprocessing import LabelEncoder
 from fhgutils import filter_labels, one_label_per_window
 
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # Parse command line args
 parser = argparse.ArgumentParser()
-parser.add_argument("--model", type=str, required=True, help="Model name")
+parser.add_argument("--model", type=str, required=True, choices=["fcn", "lstm"], help="Model type")
 parser.add_argument("--tool", type=str, required=True, help="Tool to filter data")
 parser.add_argument("--sensor", type=str, required=True, help="Sensor filter for data")
 args = parser.parse_args()
@@ -68,7 +69,12 @@ sample_X, _ = dataset[0]
 time_steps = sample_X.shape[0]
 input_channels = sample_X.shape[1]
 num_classes = len(le.classes_)
-model = FCNClassifier(input_channels, time_steps, num_classes).to(device)
+
+if args.model == "fcn":
+    model = FCNClassifier(input_channels, time_steps, num_classes).to(device)
+elif args.model == "lstm":
+    model = LSTMClassifier(input_channels=input_channels, time_steps=time_steps, num_classes=num_classes).to(device)
+
 model.load_state_dict(torch.load(saved_model_path))
 model.eval()
 logger.info("Model loaded and set to evaluation mode.")
