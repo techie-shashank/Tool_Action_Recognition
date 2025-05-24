@@ -37,6 +37,7 @@ logger.info("Loading and preprocessing data...")
 data_loader = ToolTrackingDataLoader(source=r"./../data/tool-tracking-data")
 Xt, Xc, y, classes = data_loader.load_and_process(tool=args.tool, desc_filter=args.sensor)
 Xt_f, Xc_f, y_f = filter_labels(labels=[-1], Xt=Xt, Xc=Xc, y=y)
+X_f = Xt_f[:,:,1:]
 y_f = one_label_per_window(y=y_f)
 le = LabelEncoder()
 y_f = le.fit_transform(y_f)
@@ -44,7 +45,7 @@ logger.info("Data loaded and preprocessed successfully.")
 
 # Create dataset and split
 logger.info("Splitting dataset into train, validation, and test sets...")
-dataset = ToolTrackingWindowDataset(Xt_f, y_f)
+dataset = ToolTrackingWindowDataset(X_f, y_f)
 torch.manual_seed(42)
 total_size = len(dataset)
 train_size = int(0.7 * total_size)

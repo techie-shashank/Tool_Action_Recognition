@@ -103,7 +103,10 @@ y_f = one_label_per_window(y=y_f)
 le = LabelEncoder()
 y_f = le.fit_transform(y_f)
 
-dataset = ToolTrackingWindowDataset(Xt_f, y_f)
+# Remove timestamp
+X_f = Xt_f[:,:,1:]
+
+dataset = ToolTrackingWindowDataset(X_f, y_f)
 
 # ---------------------- Data Splitting ----------------------
 torch.manual_seed(42)
