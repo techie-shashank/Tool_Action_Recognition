@@ -1,11 +1,7 @@
 .vscode/
 .idea/
 
-/src/__pycache__/
-data/fhg-utils/fhgutils/__pycache__/
-src/data/__pycache__/
-data/data-tools/datatools/__pycache__/
-src/models/__pycache__/
+__pycache__/
 
 /data/tool-tracking-data/
 experiments/
