@@ -77,7 +77,7 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, device, n
 
 # ---------------------- Data Loading and Preprocessing ----------------------
 logger.info("Loading and preprocessing data...")
-data_loader = ToolTrackingDataLoader(source="./../data/tool-tracking-data")
+data_loader = ToolTrackingDataLoader(source=r"./../data/tool-tracking-data")
 Xt, Xc, y, classes = data_loader.load_and_process(tool="electric_screwdriver", desc_filter='acc')
 Xt_f, Xc_f, y_f = filter_labels(labels=[-1], Xt=Xt, Xc=Xc, y=y)
 

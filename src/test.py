@@ -32,7 +32,7 @@ saved_model_path = os.path.join("./../saved_model", args.model, f"model.pt")
 
 
 # Load and preprocess data
-data_loader = ToolTrackingDataLoader(source="./../data/tool-tracking-data")
+data_loader = ToolTrackingDataLoader(source=r"./../data/tool-tracking-data")
 Xt, Xc, y, classes = data_loader.load_and_process(tool="electric_screwdriver", desc_filter='acc')
 Xt_f, Xc_f, y_f = filter_labels(labels=[-1], Xt=Xt, Xc=Xc, y=y)
 y_f = one_label_per_window(y=y_f)
