@@ -1,4 +1,6 @@
+import json
 import argparse
+import shutil
 import os
 import logging
 import torch
@@ -6,21 +8,37 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 from data.dataset import ToolTrackingWindowDataset
-from data.loader import ToolTrackingDataLoader
-from models.fcn import FCNClassifier
+from src.data.loader import ToolTrackingDataLoader
+from src.models.fcn import FCNClassifier
 from fhgutils import filter_labels, one_label_per_window
 from sklearn.preprocessing import LabelEncoder
 from datetime import datetime
 
+
 # Parse command line args
 parser = argparse.ArgumentParser()
 parser.add_argument("--model", type=str, required=True, help="Model name")
+parser.add_argument("--tool", type=str, required=True, help="Tool to filter data")
+parser.add_argument("--sensor", type=str, required=True, help="Sensor filter for data")
 args = parser.parse_args()
+
+# Load configuration from fcn.json
+config_path = os.path.join(r'../configs', f"{args.model}.json")
+with open(config_path, 'r') as config_file:
+    config = json.load(config_file)
+
+# Extract parameters from config
+batch_size = config["batch_size"]
+epochs = config["epochs"]
+learning_rate = config["learning_rate"]
 
 # Create a new experiment folder with timestamp
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-experiment_dir = os.path.join(r"./../experiments", args.model, f"run_{timestamp}")
+experiment_dir = os.path.join("./../experiments", args.model, f"run_{timestamp}")
 os.makedirs(experiment_dir, exist_ok=True)
+
+# Save the fcn.json in the experiment directory
+shutil.copy(config_path, os.path.join(experiment_dir, "config.json"))
 
 # Set paths
 log_path = os.path.join(experiment_dir, "training.log")
@@ -78,7 +96,7 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, device, n
 # ---------------------- Data Loading and Preprocessing ----------------------
 logger.info("Loading and preprocessing data...")
 data_loader = ToolTrackingDataLoader(source=r"./../data/tool-tracking-data")
-Xt, Xc, y, classes = data_loader.load_and_process(tool="electric_screwdriver", desc_filter='acc')
+Xt, Xc, y, classes = data_loader.load_and_process(tool=args.tool, desc_filter=args.sensor)
 Xt_f, Xc_f, y_f = filter_labels(labels=[-1], Xt=Xt, Xc=Xc, y=y)
 
 y_f = one_label_per_window(y=y_f)
@@ -98,8 +116,8 @@ train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, va
 logger.info(f"Dataset split into Train: {train_size}, Val: {val_size}, Test: {test_size}")
 
 # ---------------------- DataLoaders ----------------------
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=32)
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
 # ---------------------- Model Setup ----------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -110,10 +128,10 @@ num_classes = len(le.classes_)
 
 model = FCNClassifier(input_channels, time_steps, num_classes).to(device)
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=1e-3)
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 logger.info("Starting training...")
-train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=10)
+train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=epochs)
 
 # ---------------------- Optional: Save Model ----------------------
 torch.save(model.state_dict(), model_path)
