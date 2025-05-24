@@ -19,7 +19,7 @@ args = parser.parse_args()
 
 # Create a new experiment folder with timestamp
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-experiment_dir = os.path.join("./../experiments", args.model, f"run_{timestamp}")
+experiment_dir = os.path.join(r"./../experiments", args.model, f"run_{timestamp}")
 os.makedirs(experiment_dir, exist_ok=True)
 
 # Set paths

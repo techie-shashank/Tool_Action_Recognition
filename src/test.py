@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--model", type=str, required=True, help="Model name")
 args = parser.parse_args()
 
-saved_model_path = os.path.join("./../saved_model", args.model, f"model.pt")
+saved_model_path = os.path.join(r"./../saved_model", args.model, f"model.pt")
 
 
 # Load and preprocess data
