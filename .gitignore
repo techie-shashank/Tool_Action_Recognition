@@ -10,3 +10,5 @@ experiments/
 
 logs/
 saved_model/
+
+/venv/
