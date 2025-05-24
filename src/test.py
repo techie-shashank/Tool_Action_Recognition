@@ -4,9 +4,9 @@ import torch
 import logging
 from datetime import datetime
 from torch.utils.data import DataLoader, random_split
-from src.data.loader import ToolTrackingDataLoader
+from data.loader import ToolTrackingDataLoader
 from data.dataset import ToolTrackingWindowDataset
-from src.models.fcn import FCNClassifier
+from models.fcn import FCNClassifier
 from sklearn.preprocessing import LabelEncoder
 from fhgutils import filter_labels, one_label_per_window
 

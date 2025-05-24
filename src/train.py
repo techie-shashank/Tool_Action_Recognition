@@ -6,8 +6,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 from data.dataset import ToolTrackingWindowDataset
-from src.data.loader import ToolTrackingDataLoader
-from src.models.fcn import FCNClassifier
+from data.loader import ToolTrackingDataLoader
+from models.fcn import FCNClassifier
 from fhgutils import filter_labels, one_label_per_window
 from sklearn.preprocessing import LabelEncoder
 from datetime import datetime
