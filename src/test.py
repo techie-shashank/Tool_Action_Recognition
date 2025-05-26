@@ -2,11 +2,13 @@ import os
 import argparse
 import torch
 import logging
+import shutil
 from torch.utils.data import DataLoader, random_split
 from data.loader import ToolTrackingDataLoader
 from data.dataset import ToolTrackingWindowDataset
 from models.fcn import FCNClassifier
 from models.lstm import LSTMClassifier
+from models.semi_supervised import SemiSupervisedModel
 from sklearn.preprocessing import LabelEncoder
 from fhgutils import filter_labels, one_label_per_window
 
@@ -25,13 +27,43 @@ logger = logging.getLogger(__name__)
 
 # Parse command line args
 parser = argparse.ArgumentParser()
-parser.add_argument("--model", type=str, required=True, choices=["fcn", "lstm"], help="Model type")
+parser.add_argument("--model", type=str, required=True, choices=["semi_fcn","semi_lstm","fcn", "lstm"], help="Model type")
 parser.add_argument("--tool", type=str, required=True, help="Tool to filter data")
 parser.add_argument("--sensor", type=str, required=True, help="Sensor filter for data")
 args = parser.parse_args()
 
 saved_model_path = os.path.join(r"./../saved_model", args.model, f"model.pt")
 
+# ---------------------- Ensure Model Exists ----------------------
+def ensure_model_exists(model_type, saved_model_path):
+    if os.path.exists(saved_model_path):
+        logger.info(f"Model already exists at {saved_model_path}")
+        return
+
+    os.makedirs(os.path.dirname(saved_model_path), exist_ok=True)
+
+    experiment_root = os.path.join("../experiments", model_type)
+    if not os.path.exists(experiment_root):
+        raise FileNotFoundError(f"No experiment directory found for model: {model_type}")
+
+    run_dirs = sorted(
+        [os.path.join(experiment_root, d) for d in os.listdir(experiment_root)
+         if os.path.isdir(os.path.join(experiment_root, d)) and d.startswith("run_")],
+        reverse=True
+    )
+
+    for run_dir in run_dirs:
+        candidate_model_path = os.path.join(run_dir, "model.pt")
+        if os.path.exists(candidate_model_path):
+            shutil.copy(candidate_model_path, saved_model_path)
+            logger.info(f"Copied model from {candidate_model_path} to {saved_model_path}")
+            return
+
+    raise FileNotFoundError(f"No model.pt found in any runs under {experiment_root}")
+
+ensure_model_exists(args.model, saved_model_path)
+
+# ---------------------- Load and Preprocess Data ----------------------
 
 # Load and preprocess data
 logger.info("Loading and preprocessing data...")
@@ -70,10 +102,19 @@ time_steps = sample_X.shape[0]
 input_channels = sample_X.shape[1]
 num_classes = len(le.classes_)
 
-if args.model == "fcn":
+if args.model.lower() == "fcn":
     model = FCNClassifier(input_channels, time_steps, num_classes).to(device)
-elif args.model == "lstm":
-    model = LSTMClassifier(input_channels=input_channels, time_steps=time_steps, num_classes=num_classes).to(device)
+elif args.model.lower() == "lstm":
+    model = LSTMClassifier(input_channels,time_steps,num_classes).to(device)
+elif args.model.lower() == "semi_fcn":
+    base_model = FCNClassifier(input_channels, time_steps, num_classes).to(device)
+    model = SemiSupervisedModel(base_model).to(device)
+elif args.model.lower() == "semi_lstm":
+    base_model = LSTMClassifier(input_channels, time_steps, num_classes).to(device)
+    model = SemiSupervisedModel(base_model).to(device)
+else:
+    raise ValueError(f"Unsupported model type: {args.model}")
+
 
 model.load_state_dict(torch.load(saved_model_path))
 model.eval()
