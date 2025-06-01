@@ -11,6 +11,7 @@ from data.dataset import ToolTrackingWindowDataset
 from data.loader import ToolTrackingDataLoader
 from models.fcn import FCNClassifier
 from models.lstm import LSTMClassifier
+from models.semi_supervised import SemiSupervisedModel
 from fhgutils import filter_labels, one_label_per_window
 from sklearn.preprocessing import LabelEncoder
 from datetime import datetime
@@ -18,7 +19,7 @@ from datetime import datetime
 
 # Parse command line args
 parser = argparse.ArgumentParser()
-parser.add_argument("--model", type=str, required=True, choices=["fcn", "lstm"], help="Model type")
+parser.add_argument("--model", type=str, required=True, choices=["semi_fcn","semi_lstm","fcn", "lstm"], help="Model type")
 parser.add_argument("--tool", type=str, required=True, help="Tool to filter data")
 parser.add_argument("--sensor", type=str, required=True, help="Sensor filter for data")
 args = parser.parse_args()
@@ -58,7 +59,7 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------- Training Function ----------------------
-def train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=10):
+def train_model(model, train_loader, val_loader, unlabeled_loader, criterion, optimizer, device, num_epochs=10):
     for epoch in range(num_epochs):
         model.train()
         train_loss = 0
@@ -71,6 +72,29 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, device, n
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
+
+
+        # Pseudo-labeling step
+        pseudo_loss_total = 0
+        pseudo_batches = 0
+        if unlabeled_loader and hasattr(model, "predict_pseudo_labels"):
+            for X_unlabeled, _ in unlabeled_loader:
+                X_unlabeled = X_unlabeled.to(device)
+                pseudo_labels, mask = model.predict_pseudo_labels(X_unlabeled)
+                if mask.sum() == 0:
+                    continue
+
+                pseudo_X = X_unlabeled[mask]
+                pseudo_labels = pseudo_labels.to(device) 
+
+                optimizer.zero_grad()
+                outputs = model(pseudo_X)
+                pseudo_loss = criterion(outputs, pseudo_labels)
+                pseudo_loss.backward()
+                optimizer.step()
+
+                pseudo_loss_total += pseudo_loss.item()
+                pseudo_batches += 1
 
         model.eval()
         val_loss = 0
@@ -88,11 +112,15 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, device, n
         avg_train_loss = train_loss / len(train_loader)
         avg_val_loss = val_loss / len(val_loader)
         val_acc = 100 * correct / total
-
+        if pseudo_batches > 0:
+            pseudo_loss_total /= pseudo_batches
+        
         logger.info(f"[Epoch {epoch+1}] "
                     f"Train Loss: {avg_train_loss:.4f} | "
                     f"Val Loss: {avg_val_loss:.4f} | "
-                    f"Val Acc: {val_acc:.2f}%")
+                    f"Val Acc: {val_acc:.2f}% | "
+                    f"Pseudo Loss: {pseudo_loss_total:.4f}")
+
 
 # ---------------------- Data Loading and Preprocessing ----------------------
 logger.info("Loading and preprocessing data...")
@@ -125,6 +153,15 @@ logger.info(f"Dataset split into Train: {train_size}, Val: {val_size}, Test: {te
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
+# Split dataset for semi-supervised learning
+labeled_size = int(0.1 * len(train_dataset))
+unlabeled_size = len(train_dataset) - labeled_size
+labeled_dataset, unlabeled_dataset = random_split(train_dataset, [labeled_size, unlabeled_size])
+
+labeled_loader = DataLoader(labeled_dataset, batch_size=batch_size, shuffle=True)
+unlabeled_loader = DataLoader(unlabeled_dataset, batch_size=batch_size)
+
+
 # ---------------------- Model Setup ----------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 sample_X, _ = dataset[0]
@@ -132,12 +169,17 @@ time_steps = sample_X.shape[0]
 input_channels = sample_X.shape[1]
 num_classes = len(le.classes_)
 
+    
 if args.model.lower() == "fcn":
     model = FCNClassifier(input_channels, time_steps, num_classes).to(device)
 elif args.model.lower() == "lstm":
-    model = LSTMClassifier(input_channels=input_channels,
-                           time_steps=time_steps,
-                           num_classes=num_classes).to(device)
+    model = LSTMClassifier(input_channels,time_steps,num_classes).to(device)
+elif args.model.lower() == "semi_fcn":
+    base_model = FCNClassifier(input_channels, time_steps, num_classes).to(device)
+    model = SemiSupervisedModel(base_model).to(device)
+elif args.model.lower() == "semi_lstm":
+    base_model = LSTMClassifier(input_channels, time_steps, num_classes).to(device)
+    model = SemiSupervisedModel(base_model).to(device)
 else:
     raise ValueError(f"Unsupported model type: {args.model}")
 
@@ -146,7 +188,8 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 # ---------------------- Train ----------------------
 logger.info(f"Starting training for model: {args.model.upper()}")
-train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=epochs)
+train_model(model, train_loader, val_loader, unlabeled_loader, criterion, optimizer, device, num_epochs=epochs)
+
 
 # ---------------------- Optional: Save Model ----------------------
 torch.save(model.state_dict(), model_path)
