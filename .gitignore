@@ -12,3 +12,5 @@ logs/
 saved_model/
 
 /venv/
+
+evaluations/*
