@@ -24,7 +24,7 @@ parser.add_argument("--checkpoint", type=str, required=True, help="Path to model
 args = parser.parse_args()
 
 # ---------------------- Load Config ----------------------
-config_path = os.path.join(r'../configs/', f"{args.model}.json")
+config_path = os.path.join(r'../', "config.json")
 with open(config_path, 'r') as config_file:
     config = json.load(config_file)
 

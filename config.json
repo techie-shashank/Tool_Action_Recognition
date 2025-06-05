@@ -1,0 +1,10 @@
+{
+    "batch_size": 32,
+    "epochs": 10,
+    "learning_rate": 1e-3,
+    "semi_supervised": {
+        "active": true,
+        "labelled_ratio": 0.1,
+        "strategy": "contrastive"
+    }
+}
