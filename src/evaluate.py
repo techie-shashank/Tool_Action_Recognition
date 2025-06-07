@@ -24,7 +24,8 @@ parser.add_argument("--checkpoint", type=str, required=True, help="Path to model
 args = parser.parse_args()
 
 # ---------------------- Load Config ----------------------
-config_path = os.path.join(r'../configs/', f"{args.model}.json")
+script_dir = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.join(script_dir, '..', 'configs', f"{args.model}.json")
 with open(config_path, 'r') as config_file:
     config = json.load(config_file)
 
@@ -35,7 +36,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # ---------------------- Data Loading ----------------------
 print("[INFO] Loading and preprocessing data...")
-data_loader = ToolTrackingDataLoader(source=r"./../data/tool-tracking-data")
+data_path = os.path.join(script_dir, '..', 'data', 'tool-tracking-data')
+data_loader = ToolTrackingDataLoader(source=data_path)
 Xt, Xc, y, classes = data_loader.load_and_process(tool=args.tool, desc_filter=args.sensor)
 Xt_f, Xc_f, y_f = filter_labels(labels=[-1], Xt=Xt, Xc=Xc, y=y)
 y_f = one_label_per_window(y=y_f)
@@ -104,7 +106,7 @@ plt.title(f"Confusion Matrix: {args.tool}")
 plt.tight_layout()
 
 # Save results
-results_dir = os.path.join("./../evaluations", args.model)
+results_dir = os.path.join(script_dir, '..', 'evaluations', args.model)
 os.makedirs(results_dir, exist_ok=True)
 plt.savefig(os.path.join(results_dir, f"confusion_matrix_{args.tool}.png"))
 with open(os.path.join(results_dir, f"classification_report_{args.tool}.txt"), 'w') as f:
