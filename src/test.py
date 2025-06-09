@@ -16,6 +16,7 @@ from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     classification_report, confusion_matrix
 )
+from src.models.utils import get_model_class
 
 
 def parse_arguments():
@@ -61,14 +62,7 @@ def load_model(model_name, dataset, le, saved_model_path, device, model_classes)
     time_steps = sample_X.shape[0]
     input_channels = sample_X.shape[1]
     num_classes = len(le.classes_)
-
-    if model_name.lower() == "fcn":
-        model = model_classes["fcn"](input_channels, time_steps, num_classes).to(device)
-    elif model_name.lower() == "lstm":
-        model = model_classes["lstm"](input_channels, time_steps, num_classes).to(device)
-    else:
-        raise ValueError(f"Unsupported model type: {model_name}")
-
+    model = get_model_class(model_name)(input_channels, time_steps, num_classes).to(device)
     model.load_state_dict(torch.load(saved_model_path))
     model.eval()
     logger.info("Model loaded and set to evaluation mode.")

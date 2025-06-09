@@ -7,11 +7,10 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 from data.dataset import ToolTrackingWindowDataset
 from data.loader import ToolTrackingDataLoader
-from models.fcn import FCNClassifier
-from models.lstm import LSTMClassifier
 from fhgutils import filter_labels, one_label_per_window
 from sklearn.preprocessing import LabelEncoder
 from src.logger import configure_logger, logger
+from src.models.utils import get_model_class
 from src.semi_supervised.train import train_semi_supervised
 from src.utils import config, config_path, train_model
 
@@ -70,14 +69,8 @@ def setup_model(model_name, dataset, le, device):
     time_steps = sample_X.shape[0]
     input_channels = sample_X.shape[1]
     num_classes = len(le.classes_)
-
-    if model_name.lower() == "fcn":
-        model = FCNClassifier(input_channels, time_steps, num_classes).to(device)
-    elif model_name.lower() == "lstm":
-        model = LSTMClassifier(input_channels, time_steps, num_classes).to(device)
-    else:
-        raise ValueError(f"Unsupported model type: {model_name}")
-
+    model_class = get_model_class(model_name)
+    model = model_class(input_channels, time_steps, num_classes).to(device)
     return model
 
 

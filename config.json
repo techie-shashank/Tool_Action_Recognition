@@ -5,6 +5,6 @@
     "semi_supervised": {
         "active": true,
         "labelled_ratio": 0.1,
-        "strategy": "contrastive"
+        "strategy": "pseudo_labeling"
     }
 }
