@@ -4,7 +4,9 @@
     "learning_rate": 1e-3,
     "semi_supervised": {
         "active": true,
-        "labelled_ratio": 0.1,
-        "strategy": "pseudo_labeling"
+        "labelled_ratio": 0.25,
+        "strategy": "pseudo_labeling",
+        "temperature": 0.5,
+        "threshold": 0.5
     }
 }

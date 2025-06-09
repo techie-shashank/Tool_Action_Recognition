@@ -5,6 +5,12 @@ from src.data.augmentation import augment
 from src.logger import logger
 from src.utils import train_model
 
+import os
+import json
+
+config_path = os.path.join(r'../', "config.json")
+with open(config_path, 'r') as config_file:
+    config = json.load(config_file)
 
 def nt_xent_loss(z1, z2, temperature=0.5):
     z1 = F.normalize(z1, dim=1)
@@ -44,7 +50,7 @@ def contrastive_pretrain(model, unlabeled_loader, optimizer, device, epochs=20):
             z1 = model(x1)  # Assume model returns embeddings (not logits)
             z2 = model(x2)
 
-            loss = nt_xent_loss(z1, z2)
+            loss = nt_xent_loss(z1, z2, temperature= config["semi_supervised"].get("temperature"))
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
