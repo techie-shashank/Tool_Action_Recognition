@@ -21,7 +21,7 @@ from src.models.utils import get_model_class
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, required=True, choices=["semi_fcn", "semi_lstm", "fcn", "lstm"], help="Model type")
+    parser.add_argument("--model", type=str, required=True, choices=["tcn", "fcn", "lstm"], help="Model type")
     parser.add_argument("--tool", type=str, required=True, help="Tool to filter data")
     parser.add_argument("--sensor", type=str, required=True, help="Sensor filter for data")
     return parser.parse_args()
@@ -31,12 +31,11 @@ def load_and_preprocess_data(tool, sensor, data_loader_class, filter_labels, one
     data_loader = data_loader_class(source=r"./../data/tool-tracking-data")
     Xt, Xc, y, classes = data_loader.load_and_process(tool=tool, desc_filter=sensor)
     Xt_f, Xc_f, y_f = filter_labels(labels=[-1], Xt=Xt, Xc=Xc, y=y)
-    X_f = Xt_f[:, :, 1:]
     y_f = one_label_per_window(y=y_f)
     le = LabelEncoder()
     y_f = le.fit_transform(y_f)
     logger.info("Data loaded and preprocessed successfully.")
-    return X_f, y_f, le
+    return Xt_f, y_f, le
 
 def split_dataset(X_f, y_f, dataset_class, train_ratio=0.7, val_ratio=0.15):
     logger.info("Splitting dataset into train, validation, and test sets...")
@@ -56,7 +55,7 @@ def create_test_loader(test_dataset, batch_size=32):
     logger.info("Test DataLoader created successfully.")
     return test_loader
 
-def load_model(model_name, dataset, le, saved_model_path, device, model_classes):
+def load_model(model_name, dataset, le, saved_model_path, device):
     logger.info("Loading the model...")
     sample_X, _ = dataset[0]
     time_steps = sample_X.shape[0]
@@ -131,10 +130,6 @@ def evaluate_model(model, test_loader, device, le, save_dir):
 
 def test(model_name, tool_name, sensor_name, run_dir):
     logger.info("Starting the test process...")
-    model_classes = {
-        "fcn": FCNClassifier,
-        "lstm": LSTMClassifier
-    }
 
     X_f, y_f, le = load_and_preprocess_data(tool_name, sensor_name, ToolTrackingDataLoader, filter_labels,
                                             one_label_per_window)
@@ -143,7 +138,7 @@ def test(model_name, tool_name, sensor_name, run_dir):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     saved_model_path = os.path.join(run_dir, "model.pt")
-    model = load_model(model_name, test_dataset, le, saved_model_path, device, model_classes)
+    model = load_model(model_name, test_dataset, le, saved_model_path, device)
 
     evaluate_model(model, test_loader, device, le, run_dir)
 

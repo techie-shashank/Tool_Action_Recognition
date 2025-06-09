@@ -17,7 +17,7 @@ from src.utils import config, config_path, train_model
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, required=True, choices=["semi_fcn", "semi_lstm", "fcn", "lstm"], help="Model type")
+    parser.add_argument("--model", type=str, required=True, choices=["tcn", "fcn", "lstm"], help="Model type")
     parser.add_argument("--tool", type=str, required=True, help="Tool to filter data")
     parser.add_argument("--sensor", type=str, required=True, help="Sensor filter for data")
     return parser.parse_args()
@@ -48,8 +48,7 @@ def load_and_preprocess_data(tool, sensor):
     y_f = one_label_per_window(y=y_f)
     le = LabelEncoder()
     y_f = le.fit_transform(y_f)
-    X_f = Xt_f[:, :, 1:]  # Remove timestamp
-    dataset = ToolTrackingWindowDataset(X_f, y_f)
+    dataset = ToolTrackingWindowDataset(Xt_f, y_f)
     return dataset, le
 
 
@@ -69,6 +68,7 @@ def setup_model(model_name, dataset, le, device):
     time_steps = sample_X.shape[0]
     input_channels = sample_X.shape[1]
     num_classes = len(le.classes_)
+    logger.info(f"Input Channels: {input_channels}, Time Steps: {time_steps}, Number of Classes: {num_classes}")
     model_class = get_model_class(model_name)
     model = model_class(input_channels, time_steps, num_classes).to(device)
     return model
@@ -84,7 +84,6 @@ def train(model_name, tool_name, sensor_name, experiment_dir):
 
     # Data loading and preprocessing
     dataset, le = load_and_preprocess_data(tool_name, sensor_name)
-
     # Data splitting
     train_dataset, val_dataset, test_dataset = split_data(dataset)
 

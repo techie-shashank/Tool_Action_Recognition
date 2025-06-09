@@ -5,17 +5,16 @@ class TCNClassifier(nn.Module):
     def __init__(self, input_channels, time_steps, num_classes):
         super(TCNClassifier, self).__init__()
 
-        # TCN expects (B, C, L) = (batch, input_channels, time_steps)
         self.tcn = TCN(
             num_inputs=input_channels,
-            num_channels=[64, 64, 64],     # You can tune this
+            num_channels=[64, 64, 64],
             kernel_size=4,
             dropout=0.2,
             causal=True,
             use_norm='weight_norm',
             activation='relu',
             input_shape='NCL',
-            output_projection=None         # We'll define our own classifier
+            output_projection=None
         )
 
         # Output classifier head
@@ -26,7 +25,6 @@ class TCNClassifier(nn.Module):
         )
 
     def forward(self, x):
-        # Input: (B, T, C), like your FCN model
         x = x.permute(0, 2, 1)      # Convert to (B, C, T)
         y = self.tcn(x)             # Output: (B, C_out, T)
         y = y[:, :, -1]             # Take last timestep
