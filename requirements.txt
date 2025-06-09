@@ -8,3 +8,4 @@ matplotlib
 seaborn
 tabulate
 numpy
+pytorch-tcn
