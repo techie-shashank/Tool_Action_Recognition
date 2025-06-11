@@ -2,9 +2,17 @@ import torch
 from torch.utils.data import TensorDataset, random_split, DataLoader, ConcatDataset
 from src.logger import logger
 from src.utils import config, train_model
+import os
+import json
 
+config_path = os.path.join(r'../', "config.json")
+with open(config_path, 'r') as config_file:
+    config = json.load(config_file)
 
-def generate_pseudo_labels(model, unlabeled_loader, device, threshold=0.9):
+def generate_pseudo_labels(model, unlabeled_loader, device, threshold=None):
+    if threshold is None:
+        threshold = 0.9
+        print("Threshold is set to default value:" + threshold)
     model.eval()
     pseudo_X, pseudo_y = [], []
 
@@ -41,7 +49,7 @@ def train_pseudo_labelling(model, labeled_loader, unlabeled_loader, val_loader, 
 
     # Generate pseudo-labels
     logger.info("Starting pseudo-labeling process...")
-    pseudo_dataset = generate_pseudo_labels(model, unlabeled_loader, device, threshold=0.9)
+    pseudo_dataset = generate_pseudo_labels(model, unlabeled_loader, device, threshold=config["semi_supervised"].get("threshold"))
 
     # Combine and retrain
     if pseudo_dataset is not None:
