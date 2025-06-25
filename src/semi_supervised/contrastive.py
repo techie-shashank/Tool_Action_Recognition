@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
 from src.data.augmentation import augment
@@ -34,21 +35,50 @@ def nt_xent_loss(z1, z2, temperature=0.5):
     )
     return loss.mean()
 
-def contrastive_pretrain(model, unlabeled_loader, optimizer, device, epochs=20):
+
+class ProjectionHead(nn.Module):
+    def __init__(self, input_dim, projection_dim=128):
+        super(ProjectionHead, self).__init__()
+        self.net = nn.Sequential(
+            nn.Linear(input_dim, 256),
+            nn.ReLU(),
+            nn.Linear(256, projection_dim)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+
+def contrastive_pretrain(model, unlabeled_loader, device, epochs=10):
+    projection_head = ProjectionHead(model.encoder_output_size).to(device)
+    optimizer = torch.optim.Adam(
+        list(model.parameters()) + list(projection_head.parameters()),
+        lr=1e-3
+    )
+
     model.train()
+    projection_head.train()
     logger.info("Starting contrastive pretraining...")
 
     for epoch in range(epochs):
         total_loss = 0.0
         for x_batch in unlabeled_loader:
-            x = x_batch[0].to(device)  # Unpack (X,) if needed
+            x = x_batch[0].to(device)  # Unpack if needed
 
             x1 = augment(x)
             x2 = augment(x)
 
             optimizer.zero_grad()
-            z1 = model(x1)  # Assume model returns embeddings (not logits)
-            z2 = model(x2)
+            h1 = model.forward_encoder_only(x1)
+            h2 = model.forward_encoder_only(x2)
+
+            # Pass through projection head
+            z1 = projection_head(h1)
+            z2 = projection_head(h2)
+
+            # Normalize embeddings (recommended)
+            z1 = F.normalize(z1, dim=1)
+            z2 = F.normalize(z2, dim=1)
 
             loss = nt_xent_loss(z1, z2, temperature= config["semi_supervised"].get("temperature"))
             loss.backward()
@@ -56,12 +86,12 @@ def contrastive_pretrain(model, unlabeled_loader, optimizer, device, epochs=20):
             total_loss += loss.item()
 
         avg_loss = total_loss / len(unlabeled_loader)
-        logger.info(f"[Contrastive Epoch {epoch+1}] Pretraining Loss: {avg_loss:.4f}")
+        logger.info(f"[Contrastive Epoch {epoch + 1}] Pretraining Loss: {avg_loss:.4f}")
 
 
 def train_contrastive(model, labeled_loader, unlabeled_loader, val_loader, criterion, optimizer, device, num_epochs=10):
     logger.info("Using contrastive learning strategy for semi-supervised learning.")
-    contrastive_pretrain(model, unlabeled_loader, optimizer, device, epochs=num_epochs)
+    contrastive_pretrain(model, unlabeled_loader, device, epochs=10)
 
     logger.info("Fine-tuning on labeled data...")
     train_model(model, labeled_loader, val_loader, criterion, optimizer, device, num_epochs=num_epochs)

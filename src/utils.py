@@ -2,6 +2,7 @@ import json
 import os
 
 import torch
+from torch.utils.data import random_split
 
 from src.logger import logger
 import shutil
@@ -74,3 +75,13 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, device, n
                     f"Train Loss: {avg_train_loss:.4f} | "
                     f"Val Loss: {avg_val_loss:.4f} | "
                     f"Val Acc: {val_acc:.2f}%")
+
+
+def get_percentage_of_data(dataset, percentage):
+    """
+    Returns a subset of the dataset based on the specified percentage.
+    """
+    total_size = len(dataset)
+    subset_size = int(percentage * total_size)
+    _, subset = random_split(dataset, [total_size - subset_size, subset_size])
+    return subset

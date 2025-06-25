@@ -28,4 +28,3 @@ if __name__ == "__main__":
 
     # Test the model
     test(model_name, tool_name, sensor_name, experiments_dir)
-

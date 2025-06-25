@@ -12,7 +12,7 @@ from sklearn.preprocessing import LabelEncoder
 from src.logger import configure_logger, logger
 from src.models.utils import get_model_class
 from src.semi_supervised.train import train_semi_supervised
-from src.utils import config, config_path, train_model
+from src.utils import config, config_path, train_model, get_percentage_of_data
 
 
 def parse_arguments():
@@ -59,7 +59,9 @@ def split_data(dataset, train_ratio=0.7, val_ratio=0.15):
     val_size = int(val_ratio * total_size)
     test_size = total_size - train_size - val_size
     train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
-    logger.info(f"Dataset split into Train: {train_size}, Val: {val_size}, Test: {test_size}")
+    data_ratio = config['data_ratio']
+    train_dataset = get_percentage_of_data(train_dataset, data_ratio)
+    logger.info(f"Dataset split into Train: {len(train_dataset)}, Val: {val_size}, Test: {test_size}")
     return train_dataset, val_dataset, test_dataset
 
 

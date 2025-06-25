@@ -2,11 +2,12 @@
     "batch_size": 32,
     "epochs": 10,
     "learning_rate": 1e-3,
+    "data_ratio": 0.25,
     "semi_supervised": {
-        "active": true,
+        "active": false,
         "labelled_ratio": 0.25,
-        "strategy": "pseudo_labeling",
+        "strategy": "contrastive",
         "temperature": 0.5,
-        "threshold": 0.5
+        "threshold": 0.9
     }
 }
