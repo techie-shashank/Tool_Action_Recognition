@@ -16,6 +16,7 @@ from sklearn.metrics import (
     classification_report, confusion_matrix
 )
 from models.utils import get_model_class
+from utils import remove_undefined_class
 
 
 def parse_arguments():
@@ -29,6 +30,7 @@ def load_and_preprocess_data(tool, sensor, data_loader_class):
     logger.info("Loading and preprocessing data...")
     data_loader = data_loader_class(source=r"./../data/tool-tracking-data")
     Xt, y, classes = data_loader.load_and_process(tool, sensor)
+    Xt, y = remove_undefined_class(Xt, y)
     le = LabelEncoder()
     y = le.fit_transform(y)
     logger.info("Data loaded and preprocessed successfully.")

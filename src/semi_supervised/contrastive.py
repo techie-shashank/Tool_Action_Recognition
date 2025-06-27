@@ -83,6 +83,7 @@ def contrastive_pretrain(model, unlabeled_loader, device, epochs=10):
             loss = nt_xent_loss(z1, z2, temperature= config["semi_supervised"].get("temperature"))
             loss.backward()
             optimizer.step()
+            optimizer.zero_grad()
             total_loss += loss.item()
 
         avg_loss = total_loss / len(unlabeled_loader)

@@ -119,12 +119,12 @@ class ToolTrackingDataLoader:
             # For magnetometer, downsample to 102 Hz if needed
             elif desc_filter == 'mag':
                 print("[INFO] Downsampling magnetometer")
-                target_length = 41  # example window length for acc/gyr
+                target_length = 62  # example window length for acc/gyr
                 Xt = np.array([resample(window, target_length, axis=0) for window in Xt])
 
             # For acc, gyr, or other sensors, keep or resample to fixed length (say 41)
             else:
-                target_length = 41
+                target_length = 62
                 Xt = np.array([resample(window, target_length, axis=0) for window in Xt])
 
 

@@ -10,6 +10,7 @@ from sklearn.preprocessing import LabelEncoder
 from logger import configure_logger, logger
 from models.utils import get_model_class
 from semi_supervised.train import train_semi_supervised
+from utils import remove_undefined_class
 from utils import config, config_path, train_model, get_percentage_of_data, FocalLoss
 from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
@@ -44,6 +45,7 @@ def load_and_preprocess_data(tool, sensors):
     logger.info("Loading and preprocessing data...")
     data_loader = ToolTrackingDataLoader(source=r"./../data/tool-tracking-data")
     Xt, y, classes = data_loader.load_and_process(tool, sensors)
+    Xt, y = remove_undefined_class(Xt, y)
     le = LabelEncoder()
     y = le.fit_transform(y)
     dataset = ToolTrackingWindowDataset(Xt, y)

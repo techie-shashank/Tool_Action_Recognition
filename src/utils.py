@@ -4,6 +4,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.nn.utils as utils
 from torch.utils.data import random_split
 
 from logger import logger
@@ -53,6 +54,7 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, device, n
             outputs = model(X_batch)
             loss = criterion(outputs, y_batch)
             loss.backward()
+            utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
             train_loss += loss.item()
 
@@ -77,6 +79,13 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, device, n
                     f"Train Loss: {avg_train_loss:.4f} | "
                     f"Val Loss: {avg_val_loss:.4f} | "
                     f"Val Acc: {val_acc:.2f}%")
+
+
+def remove_undefined_class(Xt, y):
+    mask = y != 8
+    X_filtered = Xt[mask]
+    y_filtered = y[mask]
+    return X_filtered, y_filtered
 
 
 def get_percentage_of_data(dataset, percentage):

@@ -3,17 +3,19 @@ import torch.nn as nn
 
 class LSTMClassifier(nn.Module):
 
-    def __init__(self, input_channels, time_steps, num_classes, hidden_size=64, num_layers=1):
+    def __init__(self, input_channels, time_steps, num_classes, hidden_size=64, num_layers=2):
         super(LSTMClassifier, self).__init__()
 
         self.encoder_output_size = hidden_size
         self.encoder = nn.LSTM(input_size=input_channels,
-                            hidden_size=hidden_size,
-                            num_layers=num_layers,
-                            batch_first=True)
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
+            bidirectional=True
+       )
 
         self.fc = nn.Sequential(
-            nn.Linear(hidden_size, 128),
+            nn.Linear(hidden_size * 2, 128),
             nn.ReLU(),
             nn.Dropout(0.3),
             nn.Linear(128, num_classes)
