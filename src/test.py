@@ -7,7 +7,7 @@ from data.dataset import ToolTrackingWindowDataset
 from models.fcn import FCNClassifier
 from models.lstm import LSTMClassifier
 from sklearn.preprocessing import LabelEncoder
-from src.logger import configure_logger, logger
+from logger import configure_logger, logger
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,14 +15,14 @@ from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     classification_report, confusion_matrix
 )
-from src.models.utils import get_model_class
+from models.utils import get_model_class
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, required=True, choices=["tcn", "fcn", "lstm"], help="Model type")
     parser.add_argument("--tool", type=str, required=True, help="Tool to filter data")
-    parser.add_argument("--sensor", type=str, required=True, help="Sensor filter for data")
+    parser.add_argument("--sensor", type=str, nargs='+', default='all', help="List of sensors to filter data")
     return parser.parse_args()
 
 def load_and_preprocess_data(tool, sensor, data_loader_class):

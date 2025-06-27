@@ -2,24 +2,24 @@ import argparse
 import shutil
 import os
 import torch
-import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 from data.dataset import ToolTrackingWindowDataset
 from data.loader import ToolTrackingDataLoader
-from fhgutils import filter_labels, one_label_per_window
 from sklearn.preprocessing import LabelEncoder
-from src.logger import configure_logger, logger
-from src.models.utils import get_model_class
-from src.semi_supervised.train import train_semi_supervised
-from src.utils import config, config_path, train_model, get_percentage_of_data
+from logger import configure_logger, logger
+from models.utils import get_model_class
+from semi_supervised.train import train_semi_supervised
+from utils import config, config_path, train_model, get_percentage_of_data, FocalLoss
+from sklearn.utils.class_weight import compute_class_weight
+import numpy as np
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, required=True, choices=["tcn", "fcn", "lstm"], help="Model type")
     parser.add_argument("--tool", type=str, required=True, help="Tool to filter data")
-    parser.add_argument("--sensor", type=str, required=True, help="Sensor filter for data")
+    parser.add_argument("--sensor", type=str, nargs='+', default='all', help="List of sensors to filter data")
     return parser.parse_args()
 
 
@@ -87,11 +87,17 @@ def train(model_name, tool_name, sensor_name, experiment_dir):
     # Data splitting
     train_dataset, val_dataset, test_dataset = split_data(dataset)
 
-
     # Model setup
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = setup_model(model_name, dataset, le, device)
-    criterion = nn.CrossEntropyLoss()
+
+    y_train = dataset.y.cpu().numpy()
+    classes = np.unique(y_train)
+    class_weights = compute_class_weight(class_weight='balanced', classes=classes, y=y_train)
+    class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32).to(device)
+    criterion = FocalLoss(alpha=class_weights_tensor, gamma=0.5, reduction='mean')
+
+
     optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
 
     # Train

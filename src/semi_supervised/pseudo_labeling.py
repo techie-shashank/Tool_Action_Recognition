@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import TensorDataset, random_split, DataLoader, ConcatDataset
-from src.logger import logger
-from src.utils import config, train_model
+from logger import logger
+from utils import config, train_model
 import os
 import json
 

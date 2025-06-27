@@ -98,7 +98,7 @@ class ToolTrackingDataLoader:
 
     def process_segmented_data(self, X_trans, y_trans, desc_filters=None):
 
-        if not desc_filters:
+        if not desc_filters or 'all' in desc_filters:
             desc_filters = ['acc', 'gyr', 'mag', 'mic']
 
         print(f"[INFO] extract segmented {desc_filters} data")

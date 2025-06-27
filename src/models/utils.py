@@ -10,13 +10,13 @@ def get_model_class(model_name):
         class: Model class.
     """
     if model_name.lower() == "tcn":
-        from src.models.tcn import TCNClassifier
+        from models.tcn import TCNClassifier
         return TCNClassifier
     elif model_name.lower() == "fcn":
-        from src.models.fcn import FCNClassifier
+        from models.fcn import FCNClassifier
         return FCNClassifier
     elif model_name.lower() == "lstm":
-        from src.models.lstm import LSTMClassifier
+        from models.lstm import LSTMClassifier
         return LSTMClassifier
     else:
         raise ValueError(f"Unknown model name: {model_name}")

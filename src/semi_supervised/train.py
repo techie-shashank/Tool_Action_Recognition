@@ -1,8 +1,8 @@
 from torch.utils.data import random_split, DataLoader, ConcatDataset
-from src.logger import logger
-from src.semi_supervised.contrastive import train_contrastive
-from src.semi_supervised.pseudo_labeling import train_pseudo_labelling
-from src.utils import config, train_model
+from logger import logger
+from semi_supervised.contrastive import train_contrastive
+from semi_supervised.pseudo_labeling import train_pseudo_labelling
+from utils import config, train_model
 
 
 def split_training_dataset(train_dataset, labeled_ratio=0.1):

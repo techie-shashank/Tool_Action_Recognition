@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from src.data.augmentation import augment
-from src.logger import logger
-from src.utils import train_model
+from data.augmentation import augment
+from logger import logger
+from utils import train_model
 
 import os
 import json

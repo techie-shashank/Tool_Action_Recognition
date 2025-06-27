@@ -1,15 +1,15 @@
 import argparse
 import os
-from src.logger import configure_logger, logger
-from src.train import train, get_experiments_dir
-from src.test import test
+from logger import configure_logger, logger
+from train import train, get_experiments_dir
+from test import test
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, required=True, choices=["tcn", "fcn", "lstm"], help="Model type")
     parser.add_argument("--tool", type=str, required=True, help="Tool to filter data")
-    parser.add_argument("--sensor", type=str, nargs='+', default=None, help="List of sensors to filter data")
+    parser.add_argument("--sensor", type=str, nargs='+', default='all', help="List of sensors to filter data")
     return parser.parse_args()
 
 
