@@ -40,15 +40,13 @@ def get_experiments_dir(model_name):
     return experiment_dir
 
 
-def load_and_preprocess_data(tool, sensor):
+def load_and_preprocess_data(tool, sensors):
     logger.info("Loading and preprocessing data...")
     data_loader = ToolTrackingDataLoader(source=r"./../data/tool-tracking-data")
-    Xt, Xc, y, classes = data_loader.load_and_process(tool=tool, desc_filter=sensor)
-    Xt_f, Xc_f, y_f = filter_labels(labels=[-1], Xt=Xt, Xc=Xc, y=y)
-    y_f = one_label_per_window(y=y_f)
+    Xt, y, classes = data_loader.load_and_process(tool, sensors)
     le = LabelEncoder()
-    y_f = le.fit_transform(y_f)
-    dataset = ToolTrackingWindowDataset(Xt_f, y_f)
+    y = le.fit_transform(y)
+    dataset = ToolTrackingWindowDataset(Xt, y)
     return dataset, le
 
 

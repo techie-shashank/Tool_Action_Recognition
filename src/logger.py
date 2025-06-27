@@ -1,6 +1,6 @@
 import logging
 
-logger = logging.getLogger("mamba_ts_forecasting")
+logger = logging.getLogger("tool_action_recognition")
 logger.setLevel(logging.INFO)
 
 def configure_logger(log_path=None):

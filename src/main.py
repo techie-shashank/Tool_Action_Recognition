@@ -9,7 +9,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, required=True, choices=["tcn", "fcn", "lstm"], help="Model type")
     parser.add_argument("--tool", type=str, required=True, help="Tool to filter data")
-    parser.add_argument("--sensor", type=str, required=True, help="Sensor filter for data")
+    parser.add_argument("--sensor", type=str, nargs='+', default=None, help="List of sensors to filter data")
     return parser.parse_args()
 
 

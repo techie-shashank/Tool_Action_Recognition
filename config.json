@@ -2,7 +2,7 @@
     "batch_size": 32,
     "epochs": 10,
     "learning_rate": 1e-3,
-    "data_ratio": 0.25,
+    "data_ratio": 1,
     "semi_supervised": {
         "active": false,
         "labelled_ratio": 0.25,

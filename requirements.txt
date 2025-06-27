@@ -9,3 +9,4 @@ seaborn
 tabulate
 numpy
 pytorch-tcn
+librosa

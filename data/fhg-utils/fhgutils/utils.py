@@ -688,13 +688,15 @@ class Segment(BaseEstimator, XyTransformerMixin, SubsequentTransformer):
                 empty_windows.append(i)
 
         if len(empty_windows) > 0:
-            Xt_trans = np.delete(Xt_trans, empty_windows)
+            Xt_trans = list(np.delete(np.array(Xt_trans, dtype=object), empty_windows))
 
             if Xc is not None:
-                Xc_trans = np.delete(Xc_trans, empty_windows)
+                mask = np.ones(len(Xc_trans), dtype=bool)
+                mask[empty_windows] = False
+                Xc_trans = Xc_trans[mask]
 
             if y is not None:
-                y_trans = np.delete(y_trans, empty_windows)
+                y_trans = list(np.delete(np.array(y_trans, dtype=object), empty_windows))
 
         num_empty_windows = len(empty_windows)
 

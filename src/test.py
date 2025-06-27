@@ -7,7 +7,6 @@ from data.dataset import ToolTrackingWindowDataset
 from models.fcn import FCNClassifier
 from models.lstm import LSTMClassifier
 from sklearn.preprocessing import LabelEncoder
-from fhgutils import filter_labels, one_label_per_window
 from src.logger import configure_logger, logger
 import seaborn as sns
 import numpy as np
@@ -26,16 +25,14 @@ def parse_arguments():
     parser.add_argument("--sensor", type=str, required=True, help="Sensor filter for data")
     return parser.parse_args()
 
-def load_and_preprocess_data(tool, sensor, data_loader_class, filter_labels, one_label_per_window):
+def load_and_preprocess_data(tool, sensor, data_loader_class):
     logger.info("Loading and preprocessing data...")
     data_loader = data_loader_class(source=r"./../data/tool-tracking-data")
-    Xt, Xc, y, classes = data_loader.load_and_process(tool=tool, desc_filter=sensor)
-    Xt_f, Xc_f, y_f = filter_labels(labels=[-1], Xt=Xt, Xc=Xc, y=y)
-    y_f = one_label_per_window(y=y_f)
+    Xt, y, classes = data_loader.load_and_process(tool, sensor)
     le = LabelEncoder()
-    y_f = le.fit_transform(y_f)
+    y = le.fit_transform(y)
     logger.info("Data loaded and preprocessed successfully.")
-    return Xt_f, y_f, le
+    return Xt, y, le
 
 def split_dataset(X_f, y_f, dataset_class, train_ratio=0.7, val_ratio=0.15):
     logger.info("Splitting dataset into train, validation, and test sets...")
@@ -67,7 +64,7 @@ def load_model(model_name, dataset, le, saved_model_path, device):
     logger.info("Model loaded and set to evaluation mode.")
     return model
 
-def calculate_store_metrics(y_true, y_pred, save_dir="metrics_results", class_names=None):
+def calculate_store_metrics(y_true, y_pred, save_dir="metrics_results", labels=None, class_names=None):
     """
     Evaluate model predictions and save metrics.
 
@@ -86,7 +83,7 @@ def calculate_store_metrics(y_true, y_pred, save_dir="metrics_results", class_na
     precision = precision_score(y_true, y_pred, average='macro')
     recall = recall_score(y_true, y_pred, average='macro')
     f1 = f1_score(y_true, y_pred, average='macro')
-    report = classification_report(y_true, y_pred, target_names=class_names, digits=4)
+    report = classification_report(y_true, y_pred, labels=labels, target_names=class_names, digits=4)
 
     print(f"\n[RESULT] Accuracy: {acc:.4f}")
     print(f"[RESULT] Precision (macro): {precision:.4f}")
@@ -124,15 +121,17 @@ def evaluate_model(model, test_loader, device, le, save_dir):
             preds = torch.argmax(outputs, dim=1)
             all_preds.extend(preds.cpu().numpy())
             all_labels.extend(y_batch.cpu().numpy())
-    target_names = [str(cls) for cls in le.classes_]
-    calculate_store_metrics(all_labels, all_preds, save_dir=f"{save_dir}/metrics_results", class_names=target_names)
+    target_names = le.classes_.astype(str).tolist()
+    calculate_store_metrics(
+        all_labels, all_preds, save_dir=f"{save_dir}/metrics_results",
+        labels=np.arange(len(le.classes_)), class_names=target_names
+    )
 
 
 def test(model_name, tool_name, sensor_name, run_dir):
     logger.info("Starting the test process...")
 
-    X_f, y_f, le = load_and_preprocess_data(tool_name, sensor_name, ToolTrackingDataLoader, filter_labels,
-                                            one_label_per_window)
+    X_f, y_f, le = load_and_preprocess_data(tool_name, sensor_name, ToolTrackingDataLoader)
     test_dataset = split_dataset(X_f, y_f, ToolTrackingWindowDataset)
     test_loader = create_test_loader(test_dataset)
 
