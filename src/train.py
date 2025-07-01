@@ -80,7 +80,14 @@ def train(model_name, X_train, y_train, X_val, y_val, le, experiment_dir):
     # Train
     if config["semi_supervised"]["active"]:
         logger.info(f"Starting Semi Supervised training for model: {model_name.upper()}")
-        train_semi_supervised(model, train_dataset, val_dataset, criterion, optimizer, device, num_epochs=epochs)
+        train_semi_supervised(
+            model,
+            train_dataset,
+            val_dataset,
+            criterion,
+            optimizer,
+            device,
+            num_epochs=epochs)
     else:
 
         # DataLoaders

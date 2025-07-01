@@ -1,7 +1,7 @@
 import json
 import os
 from collections import Counter
-
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
@@ -48,6 +48,12 @@ def ensure_model_exists(model_type, saved_model_path):
 
     raise FileNotFoundError(f"No model.pt found in any runs under {experiment_root}")
 
+def train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=10,
+                save_dir="./", model_name="Model", tool_name="Tool", sensor_name="Sensors"):
+
+    train_losses = []
+    val_losses = []
+    val_accuracies = []
 
 def train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=10):
     train_losses = []
@@ -75,7 +81,7 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, device, n
 
             loss = criterion(outputs, y_batch) + l1_lambda * l1_penalty
             loss.backward()
-            utils.clip_grad_norm_(model.parameters(), 1.0)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
 
             train_loss += loss.item() * X_batch.size(0)
@@ -110,6 +116,10 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, device, n
         val_losses.append(avg_val_loss)
         val_accuracies.append(val_acc)
         val_f1_scores.append(val_f1)
+
+        train_losses.append(avg_train_loss)
+        val_losses.append(avg_val_loss)
+        val_accuracies.append(val_acc)
 
         logger.info(f"[Epoch {epoch+1}] "
                     f"Train Loss: {avg_train_loss:.4f} | "
@@ -187,20 +197,25 @@ def get_weighted_sampler(labels):
 
 
 class FocalLoss(nn.Module):
-    def __init__(self, alpha=None, gamma=2.0, reduction='mean'):
+    def __init__(self, alpha=None, gamma=1.0, reduction='mean'):
         super(FocalLoss, self).__init__()
-        self.alpha = alpha  # Tensor of shape (num_classes,) or None
+        self.alpha = alpha
         self.gamma = gamma
         self.reduction = reduction
 
     def forward(self, inputs, targets):
+        # FL(p_t) = -alpha * (1 - p_t)^gamma * log(p_t)
+        # CE = -log(p_t) * alpha
+        # FL = (1 - p_t)^gamma * CE
+        # where p_t is the model's estimated probability for each class and alpha is a weighting factor for each class.
+        # alpha is used to balance the importance of different classes using class weights.
+
         ce_loss = F.cross_entropy(inputs, targets, reduction='none', weight=self.alpha)
-        pt = torch.exp(-ce_loss)  # pt = probability of correct class
+        pt = torch.exp(-ce_loss)
         focal_loss = ((1 - pt) ** self.gamma) * ce_loss
 
         if self.reduction == 'mean':
             return focal_loss.mean()
-        elif self.reduction == 'sum':
-            return focal_loss.sum()
-        else:
-            return focal_loss
+        # can have sum..
+
+        return focal_loss
