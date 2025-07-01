@@ -1,12 +1,11 @@
 import json
 import os
-
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.utils as utils
 from torch.utils.data import random_split
-
 from logger import logger
 import shutil
 
@@ -42,8 +41,13 @@ def ensure_model_exists(model_type, saved_model_path):
 
     raise FileNotFoundError(f"No model.pt found in any runs under {experiment_root}")
 
+def train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=10,
+                save_dir="./", model_name="Model", tool_name="Tool", sensor_name="Sensors"):
 
-def train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=10):
+    train_losses = []
+    val_losses = []
+    val_accuracies = []
+
     for epoch in range(num_epochs):
         model.train()
         train_loss = 0
@@ -54,7 +58,7 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, device, n
             outputs = model(X_batch)
             loss = criterion(outputs, y_batch)
             loss.backward()
-            utils.clip_grad_norm_(model.parameters(), 1.0)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
             train_loss += loss.item()
 
@@ -75,10 +79,41 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, device, n
         avg_val_loss = val_loss / len(val_loader)
         val_acc = 100 * correct / total
 
+        train_losses.append(avg_train_loss)
+        val_losses.append(avg_val_loss)
+        val_accuracies.append(val_acc)
+
         logger.info(f"[Epoch {epoch+1}] "
                     f"Train Loss: {avg_train_loss:.4f} | "
                     f"Val Loss: {avg_val_loss:.4f} | "
                     f"Val Acc: {val_acc:.2f}%")
+
+    # --- Plotting ---
+    os.makedirs(save_dir, exist_ok=True)
+    plt.figure(figsize=(12, 5))
+
+    # Loss
+    plt.subplot(1, 2, 1)
+    plt.plot(train_losses, label="Train Loss")
+    plt.plot(val_losses, label="Val Loss")
+    plt.title(f"Loss over Epochs\n{model_name.upper()} - {tool_name} - {', '.join(sensor_name)}")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+
+    # Accuracy
+    plt.subplot(1, 2, 2)
+    plt.plot(val_accuracies, label="Val Accuracy", color="green")
+    plt.title(f"Validation Accuracy over Epochs\n{model_name.upper()} - {tool_name} - {', '.join(sensor_name)}")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy (%)")
+    plt.legend()
+
+    plt.tight_layout()
+    plot_path = os.path.join(save_dir, "training_curves.png")
+    plt.savefig(plot_path)
+    logger.info(f"Saved training curves to {plot_path}")
+
 
 
 def remove_undefined_class(Xt, y):
@@ -97,22 +132,26 @@ def get_percentage_of_data(dataset, percentage):
     _, subset = random_split(dataset, [total_size - subset_size, subset_size])
     return subset
 
-
 class FocalLoss(nn.Module):
-    def __init__(self, alpha=None, gamma=2.0, reduction='mean'):
+    def __init__(self, alpha=None, gamma=1.0, reduction='mean'):
         super(FocalLoss, self).__init__()
-        self.alpha = alpha  # Tensor of shape (num_classes,) or None
+        self.alpha = alpha
         self.gamma = gamma
         self.reduction = reduction
 
     def forward(self, inputs, targets):
+        # FL(p_t) = -alpha * (1 - p_t)^gamma * log(p_t)
+        # CE = -log(p_t) * alpha
+        # FL = (1 - p_t)^gamma * CE
+        # where p_t is the model's estimated probability for each class and alpha is a weighting factor for each class.
+        # alpha is used to balance the importance of different classes using class weights.
+
         ce_loss = F.cross_entropy(inputs, targets, reduction='none', weight=self.alpha)
-        pt = torch.exp(-ce_loss)  # pt = probability of correct class
+        pt = torch.exp(-ce_loss)
         focal_loss = ((1 - pt) ** self.gamma) * ce_loss
 
         if self.reduction == 'mean':
             return focal_loss.mean()
-        elif self.reduction == 'sum':
-            return focal_loss.sum()
-        else:
-            return focal_loss
+        # can have sum..
+
+        return focal_loss

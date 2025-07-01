@@ -105,14 +105,33 @@ def train(model_name, tool_name, sensor_name, experiment_dir):
     # Train
     if config["semi_supervised"]["active"]:
         logger.info(f"Starting Semi Supervised training for model: {model_name.upper()}")
-        train_semi_supervised(model, train_dataset, val_dataset, criterion, optimizer, device, num_epochs=epochs)
+        train_semi_supervised(
+            model,
+            train_dataset,
+            val_dataset,
+            criterion,
+            optimizer,
+            device,
+            num_epochs=epochs)
     else:
         # DataLoaders
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
         logger.info(f"Starting training for model: {model_name.upper()}")
-        train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=epochs)
+        train_model(
+            model,
+            train_loader,
+            val_loader,
+            criterion,
+            optimizer,
+            device,
+            num_epochs=epochs,
+            save_dir=experiment_dir,
+            model_name=model_name,
+            tool_name=tool_name,
+            sensor_name=sensor_name if isinstance(sensor_name, list) else [sensor_name]
+        )
 
     # Save model
     torch.save(model.state_dict(), model_path)
