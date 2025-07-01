@@ -2,12 +2,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from data.augmentation import augment
+from data.augmentation import augment_batch
 from logger import logger
 from utils import train_model
 
 import os
 import json
+
 
 config_path = os.path.join(r'../', "config.json")
 with open(config_path, 'r') as config_file:
@@ -62,11 +63,11 @@ def contrastive_pretrain(model, unlabeled_loader, device, epochs=10):
 
     for epoch in range(epochs):
         total_loss = 0.0
-        for x_batch in unlabeled_loader:
-            x = x_batch[0].to(device)  # Unpack if needed
+        for x_batch, _ in unlabeled_loader:
+            x = x_batch.to(device)
 
-            x1 = augment(x)
-            x2 = augment(x)
+            x1 = augment_batch(x_batch, device=device)
+            x2 = augment_batch(x_batch, device=device)
 
             optimizer.zero_grad()
             h1 = model.forward_encoder_only(x1)

@@ -1,8 +1,14 @@
 import argparse
 import os
+
+import torch
+
 from logger import configure_logger, logger
-from train import train, get_experiments_dir
-from test import test
+from data.preprocessing import split_data, preprocess_signals
+from test import load_model, evaluate_model
+from utils import load_data
+from train import train, get_experiments_dir, balance_data
+from utils import config
 
 
 def parse_arguments():
@@ -23,8 +29,22 @@ if __name__ == "__main__":
     log_path = os.path.join(experiments_dir, "main.log")
     configure_logger(log_path)
 
-    # Train the model
-    train(model_name, tool_name, sensor_name, experiments_dir)
+    data_balancing = config.get("data_balancing", [])
+    Xt, y, le = load_data(args.tool, args.sensor)
+    (X_train, y_train), (X_val, y_val), (X_test, y_test) = split_data(Xt, y, data_ratio=config['data_ratio'])
+    X_train, y_train = balance_data(X_train, y_train, data_balancing)
+    X_train, X_val, X_test = preprocess_signals(X_train, X_val, X_test)
 
-    # Test the model
-    test(model_name, tool_name, sensor_name, experiments_dir)
+    # Train the model
+    train(model_name, X_train, y_train, X_val, y_val, le, experiments_dir)
+
+    # Load model
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    num_classes = len(le.classes_)
+    time_steps = X_test[0].shape[0]
+    input_channels = X_test[0].shape[1]
+    saved_model_path = os.path.join(experiments_dir, "model.pt")
+    model = load_model(args.model, input_channels, time_steps, num_classes, saved_model_path, device)
+
+    # Run test
+    evaluate_model(model, X_test, y_test, device, le, experiments_dir)

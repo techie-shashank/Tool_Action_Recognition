@@ -4,8 +4,6 @@ import torch
 from torch.utils.data import DataLoader, random_split
 from data.loader import ToolTrackingDataLoader
 from data.dataset import ToolTrackingWindowDataset
-from models.fcn import FCNClassifier
-from models.lstm import LSTMClassifier
 from sklearn.preprocessing import LabelEncoder
 from logger import configure_logger, logger
 import seaborn as sns
@@ -16,7 +14,8 @@ from sklearn.metrics import (
     classification_report, confusion_matrix
 )
 from models.utils import get_model_class
-from utils import remove_undefined_class
+from data.preprocessing import split_data, preprocess_signals
+from utils import remove_undefined_class, load_data
 
 
 def parse_arguments():
@@ -26,40 +25,9 @@ def parse_arguments():
     parser.add_argument("--sensor", type=str, nargs='+', default='all', help="List of sensors to filter data")
     return parser.parse_args()
 
-def load_and_preprocess_data(tool, sensor, data_loader_class):
-    logger.info("Loading and preprocessing data...")
-    data_loader = data_loader_class(source=r"./../data/tool-tracking-data")
-    Xt, y, classes = data_loader.load_and_process(tool, sensor)
-    Xt, y = remove_undefined_class(Xt, y)
-    le = LabelEncoder()
-    y = le.fit_transform(y)
-    logger.info("Data loaded and preprocessed successfully.")
-    return Xt, y, le
 
-def split_dataset(X_f, y_f, dataset_class, train_ratio=0.7, val_ratio=0.15):
-    logger.info("Splitting dataset into train, validation, and test sets...")
-    dataset = dataset_class(X_f, y_f)
-    torch.manual_seed(42)
-    total_size = len(dataset)
-    train_size = int(train_ratio * total_size)
-    val_size = int(val_ratio * total_size)
-    test_size = total_size - train_size - val_size
-    _, _, test_dataset = random_split(dataset, [train_size, val_size, test_size])
-    logger.info(f"Dataset split completed: Train={train_size}, Val={val_size}, Test={test_size}")
-    return test_dataset
-
-def create_test_loader(test_dataset, batch_size=32):
-    logger.info("Creating DataLoader for the test dataset...")
-    test_loader = DataLoader(test_dataset, batch_size=batch_size)
-    logger.info("Test DataLoader created successfully.")
-    return test_loader
-
-def load_model(model_name, dataset, le, saved_model_path, device):
+def load_model(model_name, input_channels, time_steps, num_classes, saved_model_path, device):
     logger.info("Loading the model...")
-    sample_X, _ = dataset[0]
-    time_steps = sample_X.shape[0]
-    input_channels = sample_X.shape[1]
-    num_classes = len(le.classes_)
     model = get_model_class(model_name)(input_channels, time_steps, num_classes).to(device)
     model.load_state_dict(torch.load(saved_model_path))
     model.eval()
@@ -111,8 +79,13 @@ def calculate_store_metrics(y_true, y_pred, save_dir="metrics_results", labels=N
     logger.info(f"Confusion matrix and classification report saved to {save_dir}")
 
 
-def evaluate_model(model, test_loader, device, le, save_dir):
+def evaluate_model(model, X_test, y_test, device, le, save_dir, config=None):
     logger.info("Starting model evaluation...")
+
+    if config is None:
+        config = {}
+    test_dataset = ToolTrackingWindowDataset(X_test, y_test, augment=False)
+    test_loader = DataLoader(test_dataset, batch_size=config.get('batch_size', 32))
 
     all_preds = []
     all_labels = []
@@ -130,20 +103,6 @@ def evaluate_model(model, test_loader, device, le, save_dir):
     )
 
 
-def test(model_name, tool_name, sensor_name, run_dir):
-    logger.info("Starting the test process...")
-
-    X_f, y_f, le = load_and_preprocess_data(tool_name, sensor_name, ToolTrackingDataLoader)
-    test_dataset = split_dataset(X_f, y_f, ToolTrackingWindowDataset)
-    test_loader = create_test_loader(test_dataset)
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    saved_model_path = os.path.join(run_dir, "model.pt")
-    model = load_model(model_name, test_dataset, le, saved_model_path, device)
-
-    evaluate_model(model, test_loader, device, le, run_dir)
-
-
 if __name__ == "__main__":
     args = parse_arguments()
 
@@ -158,4 +117,19 @@ if __name__ == "__main__":
 
     log_path = os.path.join(run_dir, "test.log")
     configure_logger(log_path)
-    test(args.model, args.tool, args.sensor, run_dir)
+
+    # Load test data
+    X_f, y_f, le = load_data(args.tool, args.sensor)
+    (X_train, y_train), (X_val, y_val), (X_test, y_test) = split_data(X_f, y_f)
+    _, _, X_test = preprocess_signals(X_train, X_val, X_test)
+
+    # Load model
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    num_classes = len(le.classes_)
+    time_steps = X_test[0].shape[0]
+    input_channels = X_test[0].shape[1]
+    saved_model_path = os.path.join(run_dir, "model.pt")
+    model = load_model(args.model, input_channels, time_steps, num_classes, saved_model_path, device)
+
+    # Run test
+    evaluate_model(model, X_test, y_test, device, le, run_dir)

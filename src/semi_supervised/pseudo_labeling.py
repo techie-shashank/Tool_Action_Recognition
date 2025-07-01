@@ -1,9 +1,13 @@
+import numpy as np
+
 import torch
 from torch.utils.data import TensorDataset, random_split, DataLoader, ConcatDataset
 from logger import logger
 from utils import config, train_model
 import os
 import json
+
+from src.utils import get_weighted_sampler
 
 config_path = os.path.join(r'../', "config.json")
 with open(config_path, 'r') as config_file:
@@ -55,7 +59,14 @@ def train_pseudo_labelling(model, labeled_loader, unlabeled_loader, val_loader, 
     if pseudo_dataset is not None:
         logger.info("Combining labeled and pseudo-labeled datasets for retraining...")
         combined_dataset = ConcatDataset([labeled_loader.dataset, pseudo_dataset])
-        combined_loader = DataLoader(combined_dataset, batch_size=64, shuffle=True)
+
+        data_balancing = config.get('data_balancing', [])
+        labels = [labeled_loader.dataset.dataset.y[idx].item() for idx in labeled_loader.dataset.indices] + pseudo_dataset.tensors[1].tolist()
+        combined_loader = DataLoader(combined_dataset, batch_size=64, sampler=get_weighted_sampler(
+            labels
+        )) if "weighted_sampling" in data_balancing else DataLoader(
+            combined_dataset, batch_size=64, shuffle=True
+        )
 
         logger.info("Retraining on combined dataset...")
         train_model(model, combined_loader, val_loader, criterion, optimizer, device, num_epochs=num_epochs)

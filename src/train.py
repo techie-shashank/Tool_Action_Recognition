@@ -1,17 +1,20 @@
 import argparse
 import shutil
 import os
+from collections import Counter
+
 import torch
 import torch.optim as optim
-from torch.utils.data import DataLoader, random_split
+import torch.nn as nn
+from torch.utils.data import DataLoader, WeightedRandomSampler
 from data.dataset import ToolTrackingWindowDataset
-from data.loader import ToolTrackingDataLoader
-from sklearn.preprocessing import LabelEncoder
 from logger import configure_logger, logger
 from models.utils import get_model_class
 from semi_supervised.train import train_semi_supervised
-from utils import remove_undefined_class
-from utils import config, config_path, train_model, get_percentage_of_data, FocalLoss
+from data.preprocessing import split_data, preprocess_signals, balance_data
+from visualization.plots import plot_and_save_training_curves, visualize_channel_attention
+from utils import load_data, get_weighted_sampler
+from utils import config, config_path, train_model, FocalLoss
 from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
 
@@ -41,65 +44,37 @@ def get_experiments_dir(model_name):
     return experiment_dir
 
 
-def load_and_preprocess_data(tool, sensors):
-    logger.info("Loading and preprocessing data...")
-    data_loader = ToolTrackingDataLoader(source=r"./../data/tool-tracking-data")
-    Xt, y, classes = data_loader.load_and_process(tool, sensors)
-    Xt, y = remove_undefined_class(Xt, y)
-    le = LabelEncoder()
-    y = le.fit_transform(y)
-    dataset = ToolTrackingWindowDataset(Xt, y)
-    return dataset, le
-
-
-def split_data(dataset, train_ratio=0.7, val_ratio=0.15):
-    torch.manual_seed(42)
-    total_size = len(dataset)
-    train_size = int(train_ratio * total_size)
-    val_size = int(val_ratio * total_size)
-    test_size = total_size - train_size - val_size
-    train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
-    data_ratio = config['data_ratio']
-    train_dataset = get_percentage_of_data(train_dataset, data_ratio)
-    logger.info(f"Dataset split into Train: {len(train_dataset)}, Val: {val_size}, Test: {test_size}")
-    return train_dataset, val_dataset, test_dataset
-
-
-def setup_model(model_name, dataset, le, device):
-    sample_X, _ = dataset[0]
-    time_steps = sample_X.shape[0]
-    input_channels = sample_X.shape[1]
-    num_classes = len(le.classes_)
+def setup_model(model_name, time_steps, input_channels, num_classes, device):
     logger.info(f"Input Channels: {input_channels}, Time Steps: {time_steps}, Number of Classes: {num_classes}")
     model_class = get_model_class(model_name)
     model = model_class(input_channels, time_steps, num_classes).to(device)
     return model
 
 
-def train(model_name, tool_name, sensor_name, experiment_dir):
+def train(model_name, X_train, y_train, X_val, y_val, le, experiment_dir):
     batch_size = config["batch_size"]
     epochs = config["epochs"]
-
+    data_balancing = config.get("data_balancing", [])
     shutil.copy(config_path, os.path.join(experiment_dir, "config.json"))
 
     model_path = os.path.join(experiment_dir, "model.pt")
 
-    # Data loading and preprocessing
-    dataset, le = load_and_preprocess_data(tool_name, sensor_name)
-    # Data splitting
-    train_dataset, val_dataset, test_dataset = split_data(dataset)
+    train_dataset = ToolTrackingWindowDataset(X_train, y_train)
+    val_dataset = ToolTrackingWindowDataset(X_val, y_val)
 
     # Model setup
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = setup_model(model_name, dataset, le, device)
+    sample_X = X_train[0]
+    time_steps = sample_X.shape[0]
+    input_channels = sample_X.shape[1]
+    num_classes = len(le.classes_)
+    model = setup_model(model_name, time_steps, input_channels, num_classes, device)
 
-    y_train = dataset.y.cpu().numpy()
-    classes = np.unique(y_train)
-    class_weights = compute_class_weight(class_weight='balanced', classes=classes, y=y_train)
-    class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32).to(device)
-    criterion = FocalLoss(alpha=class_weights_tensor, gamma=0.5, reduction='mean')
-
-
+    # Compute class weights
+    labels = np.array(train_dataset.y)
+    class_weights = compute_class_weight('balanced', classes=np.unique(labels), y=labels)
+    alpha = torch.tensor(class_weights, dtype=torch.float32).to(device)
+    criterion = FocalLoss(alpha=alpha, gamma=1.6, reduction='mean') if 'focal_loss' in data_balancing else nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=config["learning_rate"])
 
     # Train
@@ -107,12 +82,30 @@ def train(model_name, tool_name, sensor_name, experiment_dir):
         logger.info(f"Starting Semi Supervised training for model: {model_name.upper()}")
         train_semi_supervised(model, train_dataset, val_dataset, criterion, optimizer, device, num_epochs=epochs)
     else:
+
         # DataLoaders
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=get_weighted_sampler(
+            labels
+        )) if "weighted_sampling" in data_balancing else DataLoader(
+            train_dataset, batch_size=batch_size, shuffle=True
+        )
         val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
+        all_sampled_labels = []
+
+        # Collect labels for one epoch worth of data:
+        for _, labels in train_loader:
+            all_sampled_labels.extend(labels.cpu().numpy())
+
+        print("Training sample label distribution (after 1 epoch):")
+        print(Counter(all_sampled_labels))
+
         logger.info(f"Starting training for model: {model_name.upper()}")
-        train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=epochs)
+        metrics = train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=epochs)
+
+        plot_and_save_training_curves(metrics, experiment_dir)
+        if hasattr(model, 'channel_attention'):
+            visualize_channel_attention(model, experiment_dir)
 
     # Save model
     torch.save(model.state_dict(), model_path)
@@ -124,4 +117,12 @@ if __name__ == "__main__":
     experiments_dir = get_experiments_dir(args.model)
     log_path = os.path.join(experiments_dir, "train.log")
     configure_logger(log_path)
-    train(args.model, args.tool, args.sensor, experiments_dir)
+
+    # Data loading and preprocessing
+    data_balancing = config.get("data_balancing", [])
+    Xt, y, le = load_data(args.tool, args.sensor)
+    (X_train, y_train), (X_val, y_val), (X_test, _) = split_data(Xt, y, data_ratio=config['data_ratio'])
+    X_train, y_train = balance_data(X_train, y_train, data_balancing)
+    X_train, X_val, _ = preprocess_signals(X_train, X_val, X_test)
+
+    train(args.model, X_train, y_train, X_val, y_val, le, experiments_dir)

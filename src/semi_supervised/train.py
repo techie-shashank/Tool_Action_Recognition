@@ -1,8 +1,9 @@
+import numpy as np
 from torch.utils.data import random_split, DataLoader, ConcatDataset
 from logger import logger
 from semi_supervised.contrastive import train_contrastive
 from semi_supervised.pseudo_labeling import train_pseudo_labelling
-from utils import config, train_model
+from utils import config, train_model, get_weighted_sampler
 
 
 def split_training_dataset(train_dataset, labeled_ratio=0.1):
@@ -22,7 +23,13 @@ def train_semi_supervised(model, train_dataset, val_dataset, criterion, optimize
     labeled_dataset, unlabeled_dataset = split_training_dataset(
         train_dataset, labeled_ratio=config["semi_supervised"]["labelled_ratio"]
     )
-    labeled_loader = DataLoader(labeled_dataset, batch_size=batch_size, shuffle=True)
+    data_balancing = config.get('data_balancing', [])
+    labels = np.array([labeled_dataset.dataset.y[idx].item() for idx in labeled_dataset.indices])
+    labeled_loader = DataLoader(labeled_dataset, batch_size=batch_size, sampler=get_weighted_sampler(
+        labels
+    )) if "weighted_sampling" in data_balancing else DataLoader(
+        labeled_dataset, batch_size=batch_size, shuffle=True
+    )
     unlabeled_loader = DataLoader(unlabeled_dataset, batch_size=batch_size)
     val_loader = DataLoader(val_dataset, batch_size=batch_size)
 
