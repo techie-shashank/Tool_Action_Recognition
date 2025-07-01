@@ -12,11 +12,11 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 # Define all variations
 models = ["lstm", "tcn"]
 tools = ["electric_screwdriver", "pneumatic_rivet_gun", "pneumatic_screwdriver"]
-data_balancing_options = [["oversample"], ["focal_loss"], [], ["resample"], ["weighted_sampling"]]
+data_balancing_options = [["oversample"], ["focal_loss"], [], ["resample"], ["weighted_sampling"], ["augment"]]
 semi_supervised_strategies = [
     {"active": False},
-    {"active": True, "strategy": "contrastive"},
-    {"active": True, "strategy": "pseudo_labeling"}
+    {"active": True, "strategy": "contrastive", "labelled_ratio": 0.25},
+    {"active": True, "strategy": "pseudo_labeling", "labelled_ratio": 0.25}
 ]
 
 config_path = os.path.join(r'../', "config.json")

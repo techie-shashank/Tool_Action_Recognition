@@ -8,7 +8,7 @@
         "labelled_ratio": 0.25,
         "strategy": "contrastive",
         "temperature": 0.5,
-        "threshold": 0.1
+        "threshold": 0.9
     },
-    "data_balancing": ["weighted_sampling"]
+    "data_balancing": ["focal_loss"]
 }
