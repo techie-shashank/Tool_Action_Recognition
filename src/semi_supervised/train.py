@@ -3,6 +3,7 @@ from torch.utils.data import random_split, DataLoader, ConcatDataset
 from logger import logger
 from semi_supervised.contrastive import train_contrastive
 from semi_supervised.pseudo_labeling import train_pseudo_labelling
+from semi_supervised.mean_teacher import train_mean_teacher
 from utils import config, train_model, get_weighted_sampler
 
 
@@ -39,3 +40,6 @@ def train_semi_supervised(model, train_dataset, val_dataset, criterion, optimize
     elif config["semi_supervised"]["strategy"] == "contrastive":
         logger.info("Using contrastive learning strategy for semi-supervised learning.")
         train_contrastive(model, labeled_loader, unlabeled_loader, val_loader, criterion, optimizer, device, num_epochs)
+    elif config["semi_supervised"]["strategy"] == "mean_teacher":
+        logger.info("Using mean teacher learning strategy for semi-supervised learning.")
+        train_mean_teacher(model, labeled_loader, unlabeled_loader, val_loader, criterion, optimizer, device, num_epochs)
