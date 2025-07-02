@@ -80,8 +80,11 @@ def contrastive_pretrain(model, unlabeled_loader, device, epochs=10):
             # Normalize embeddings (recommended)
             z1 = F.normalize(z1, dim=1)
             z2 = F.normalize(z2, dim=1)
+            
+            semi_config = config.get("semi_supervised", {})
+            temperature = semi_config.get("temperature", 0.5) # get temperature from config, default to 0.5
 
-            loss = nt_xent_loss(z1, z2, temperature= config["semi_supervised"].get("temperature"))
+            loss = nt_xent_loss(z1, z2, temperature=temperature)
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()

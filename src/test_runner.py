@@ -39,7 +39,7 @@ def run_test(model, tool, data_balancing, semi_supervised):
 
     # Build the command
     cmd = [
-        "python3", "main.py",
+        sys.executable, "main.py",
         "--model", model,
         "--tool", tool,
         "--sensor", "all"
@@ -52,12 +52,12 @@ def run_test(model, tool, data_balancing, semi_supervised):
     print(f"Command: {' '.join(cmd)}")
 
     # Directory of this script (test_runner.py)
-    src_dir = os.path.dirname(os.path.abspath(__file__))
-
+    src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
     # Copy current environment variables and add PYTHONPATH pointing to src/
     env = os.environ.copy()
     env["PYTHONPATH"] = src_dir
-
+    env["VIRTUAL_ENV"] = os.path.dirname(sys.executable)
+    env["PATH"] = os.path.dirname(sys.executable) + os.pathsep + env["PATH"]
 
     # Run the command
     try:

@@ -1,14 +1,31 @@
 {
-    "batch_size": 32,
-    "epochs": 10,
-    "learning_rate": 0.0001,
+    "batch_size": 128,
+    "epochs": 30,
+    "learning_rate": 0.002,
     "data_ratio": 1,
     "semi_supervised": {
-        "active": true,
-        "labelled_ratio": 0.25,
-        "strategy": "contrastive",
-        "temperature": 0.5,
-        "threshold": 0.9
+        "active": false
     },
-    "data_balancing": ["focal_loss"]
+    "data_balancing": [
+        "oversample",
+        "augment"
+    ],
+    "l1_lambda": 0.1,
+    "gradient_clip": 0.5,
+    "model_params": {
+        "tcn": {
+            "num_channels": [
+                32,
+                64,
+                128
+            ],
+            "kernel_size": 4,
+            "dropout": 0.3
+        },
+        "lstm": {
+            "hidden_size": 32,
+            "num_layers": 1,
+            "dropout": 0.1
+        }
+    }
 }

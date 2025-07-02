@@ -20,7 +20,11 @@ def update_ema(student_model, teacher_model, alpha):
 def train_mean_teacher(student_model, labeled_loader, unlabeled_loader, val_loader,
                        criterion, optimizer, device, num_epochs=10, alpha=0.99, lambda_consistency=1.0):
     logger.info("Starting Mean Teacher training...")
-
+    
+    semi_config = config.get("semi_supervised", {})
+    alpha = semi_config.get("alpha", 0.99)
+    lambda_consistency = semi_config.get("lambda_consistency", 1.0)
+    
     teacher_model = copy.deepcopy(student_model)
     teacher_model.eval()
     

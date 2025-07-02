@@ -7,7 +7,7 @@ from utils import config, train_model
 import os
 import json
 
-from src.utils import get_weighted_sampler
+from utils import get_weighted_sampler
 
 config_path = os.path.join(r'../', "config.json")
 with open(config_path, 'r') as config_file:
@@ -15,8 +15,9 @@ with open(config_path, 'r') as config_file:
 
 def generate_pseudo_labels(model, unlabeled_loader, device, threshold=None):
     if threshold is None:
-        threshold = 0.9
-        print("Threshold is set to default value:" + threshold)
+        semi_config = config.get("semi_supervised", {})
+        threshold = semi_config.get("threshold", 0.9)
+        print(f"Threshold is set to value: {threshold}")
     model.eval()
     pseudo_X, pseudo_y = [], []
 
