@@ -1,0 +1,288 @@
+HYPERPARAMETER OPTIMIZATION REPORT
+==================================================
+
+Generated at: 2025-07-02 12:26:40.124535
+Total experiments: 130
+Successful experiments: 130
+
+BEST RESULTS BY MODEL-TOOL COMBINATION:
+----------------------------------------
+
+lstm_electric_screwdriver:
+  Accuracy: 0.7041
+  Precision: 0.6775
+  Recall: 0.7410
+  F1 Score: 0.6596
+  Duration: 248.18s
+  Config: {
+    "batch_size": 64,
+    "epochs": 100,
+    "learning_rate": 0.001,
+    "data_ratio": 1,
+    "semi_supervised": {
+        "active": true,
+        "strategy": "pseudo_labeling",
+        "labelled_ratio": 0.25,
+        "threshold": 0.9
+    },
+    "data_balancing": [
+        "oversample",
+        "augment"
+    ],
+    "l1_lambda": 0.5,
+    "gradient_clip": 0.5,
+    "model_params": {
+        "tcn": {
+            "num_channels": [
+                64,
+                128,
+                64
+            ],
+            "kernel_size": 5,
+            "dropout": 0.3
+        },
+        "lstm": {
+            "hidden_size": 32,
+            "num_layers": 1,
+            "dropout": 0.1
+        }
+    }
+}
+
+lstm_pneumatic_rivet_gun:
+  Accuracy: 0.7500
+  Precision: 0.5797
+  Recall: 0.6667
+  F1 Score: 0.6167
+  Duration: 49.80s
+  Config: {
+    "batch_size": 16,
+    "epochs": 75,
+    "learning_rate": 0.0005,
+    "data_ratio": 1,
+    "semi_supervised": {
+        "active": true,
+        "strategy": "contrastive",
+        "labelled_ratio": 0.1,
+        "temperature": 0.3
+    },
+    "data_balancing": [
+        "augment"
+    ],
+    "l1_lambda": 0.5,
+    "gradient_clip": 5.0,
+    "model_params": {
+        "tcn": {
+            "num_channels": [
+                64,
+                128,
+                64
+            ],
+            "kernel_size": 5,
+            "dropout": 0.3
+        },
+        "lstm": {
+            "hidden_size": 32,
+            "num_layers": 1,
+            "dropout": 0.1
+        }
+    }
+}
+
+lstm_pneumatic_screwdriver:
+  Accuracy: 0.6056
+  Precision: 0.5199
+  Recall: 0.5299
+  F1 Score: 0.4814
+  Duration: 70.57s
+  Config: {
+    "batch_size": 64,
+    "epochs": 100,
+    "learning_rate": 0.001,
+    "data_ratio": 1,
+    "semi_supervised": {
+        "active": true,
+        "strategy": "pseudo_labeling",
+        "labelled_ratio": 0.25,
+        "threshold": 0.9
+    },
+    "data_balancing": [
+        "oversample",
+        "augment"
+    ],
+    "l1_lambda": 0.5,
+    "gradient_clip": 0.5,
+    "model_params": {
+        "tcn": {
+            "num_channels": [
+                64,
+                128,
+                64
+            ],
+            "kernel_size": 5,
+            "dropout": 0.3
+        },
+        "lstm": {
+            "hidden_size": 32,
+            "num_layers": 1,
+            "dropout": 0.1
+        }
+    }
+}
+
+tcn_electric_screwdriver:
+  Accuracy: 0.7079
+  Precision: 0.5871
+  Recall: 0.6007
+  F1 Score: 0.5878
+  Duration: 119.61s
+  Config: {
+    "batch_size": 32,
+    "epochs": 30,
+    "learning_rate": 0.001,
+    "data_ratio": 1,
+    "semi_supervised": {
+        "active": true,
+        "strategy": "pseudo_labeling",
+        "labelled_ratio": 0.25,
+        "threshold": 0.9
+    },
+    "data_balancing": [
+        "oversample"
+    ],
+    "l1_lambda": 0.1,
+    "gradient_clip": 0.5,
+    "model_params": {
+        "tcn": {
+            "num_channels": [
+                64,
+                128,
+                64
+            ],
+            "kernel_size": 5,
+            "dropout": 0.3
+        },
+        "lstm": {
+            "hidden_size": 32,
+            "num_layers": 1,
+            "dropout": 0.1
+        }
+    }
+}
+
+tcn_pneumatic_rivet_gun:
+  Accuracy: 0.7500
+  Precision: 0.4608
+  Recall: 0.4608
+  F1 Score: 0.4608
+  Duration: 53.72s
+  Config: {
+    "batch_size": 64,
+    "epochs": 100,
+    "learning_rate": 0.005,
+    "data_ratio": 1,
+    "semi_supervised": {
+        "active": true,
+        "strategy": "contrastive",
+        "labelled_ratio": 0.1,
+        "temperature": 0.3
+    },
+    "data_balancing": [
+        "augment"
+    ],
+    "l1_lambda": 1.0,
+    "gradient_clip": 5.0,
+    "model_params": {
+        "tcn": {
+            "num_channels": [
+                64,
+                128,
+                64
+            ],
+            "kernel_size": 5,
+            "dropout": 0.3
+        },
+        "lstm": {
+            "hidden_size": 32,
+            "num_layers": 1,
+            "dropout": 0.1
+        }
+    }
+}
+
+tcn_pneumatic_screwdriver:
+  Accuracy: 0.5141
+  Precision: 0.2688
+  Recall: 0.2790
+  F1 Score: 0.2647
+  Duration: 58.53s
+  Config: {
+    "batch_size": 32,
+    "epochs": 50,
+    "learning_rate": 0.005,
+    "data_ratio": 1,
+    "semi_supervised": {
+        "active": true,
+        "strategy": "contrastive",
+        "labelled_ratio": 0.25,
+        "temperature": 0.5
+    },
+    "data_balancing": [],
+    "l1_lambda": 0.0,
+    "gradient_clip": 1.0,
+    "model_params": {
+        "tcn": {
+            "num_channels": [
+                64,
+                128,
+                64
+            ],
+            "kernel_size": 5,
+            "dropout": 0.3
+        },
+        "lstm": {
+            "hidden_size": 32,
+            "num_layers": 1,
+            "dropout": 0.1
+        }
+    }
+}
+
+OVERALL BEST RESULT:
+--------------------
+Model: lstm
+Tool: pneumatic_rivet_gun
+Accuracy: 0.7500
+Configuration: {
+  "batch_size": 16,
+  "epochs": 75,
+  "learning_rate": 0.0005,
+  "data_ratio": 1,
+  "semi_supervised": {
+    "active": true,
+    "strategy": "contrastive",
+    "labelled_ratio": 0.1,
+    "temperature": 0.3
+  },
+  "data_balancing": [
+    "augment"
+  ],
+  "l1_lambda": 0.5,
+  "gradient_clip": 5.0,
+  "model_params": {
+    "tcn": {
+      "num_channels": [
+        64,
+        128,
+        64
+      ],
+      "kernel_size": 5,
+      "dropout": 0.3
+    },
+    "lstm": {
+      "hidden_size": 32,
+      "num_layers": 1,
+      "dropout": 0.1
+    }
+  }
+}
