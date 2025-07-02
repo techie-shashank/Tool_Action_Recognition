@@ -48,12 +48,6 @@ def ensure_model_exists(model_type, saved_model_path):
 
     raise FileNotFoundError(f"No model.pt found in any runs under {experiment_root}")
 
-def train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=10,
-                save_dir="./", model_name="Model", tool_name="Tool", sensor_name="Sensors"):
-
-    train_losses = []
-    val_losses = []
-    val_accuracies = []
 
 def train_model(model, train_loader, val_loader, criterion, optimizer, device, num_epochs=10):
     train_losses = []
@@ -116,10 +110,6 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, device, n
         val_losses.append(avg_val_loss)
         val_accuracies.append(val_acc)
         val_f1_scores.append(val_f1)
-
-        train_losses.append(avg_train_loss)
-        val_losses.append(avg_val_loss)
-        val_accuracies.append(val_acc)
 
         logger.info(f"[Epoch {epoch+1}] "
                     f"Train Loss: {avg_train_loss:.4f} | "

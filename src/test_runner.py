@@ -1,78 +1,175 @@
-import os, sys
+import os
+import shutil
+import sys
 import json
 import subprocess
 import itertools
 import time
+import pandas as pd
 
-import os
+from generate_plots import generate_all_plots
+from main import train_and_test
 
+# ========== Setup Paths ==========
 cwd = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(cwd)
 
-# Define all variations
-models = ["lstm", "tcn"]
-tools = ["electric_screwdriver", "pneumatic_rivet_gun", "pneumatic_screwdriver"]
-data_balancing_options = [["oversample"], ["focal_loss"], [], ["resample"], ["weighted_sampling"], ["augment"]]
-semi_supervised_strategies = [
-    {"active": False},
-    {"active": True, "strategy": "contrastive", "labelled_ratio": 0.25},
-    {"active": True, "strategy": "pseudo_labeling", "labelled_ratio": 0.25}
+plot_runs_path = os.path.join(cwd, "..", "plot_runs.json")
+config_path = os.path.join(cwd, "../", "config.json")
+
+# Create unique timestamped directory
+timestamp = time.strftime("%Y%m%d_%H%M%S")
+results_dir = os.path.join(cwd, "..", "results", f"run_{timestamp}")
+os.makedirs(results_dir, exist_ok=True)
+
+# Path to results CSV inside the new directory
+results_path = os.path.join(results_dir, "experiment_results.csv")
+
+# ========== Initial Columns ==========
+base_columns = [
+    "Run No.", "model", "tool", "sensor", "data_balancing", "semi_supervised",
+    "strategy", "labelled_ratio", "accuracy", "macro_precision",
+    "macro_recall", "macro_f1"
 ]
 
-config_path = os.path.join(r'../', "config.json")
-with open(config_path, 'r') as config_file:
-    config = json.load(config_file)
+# ========== Initialize CSV ==========
+def initialize_results_csv():
+    df = pd.DataFrame(columns=base_columns)
+    df.to_csv(results_path, index=False)
+    print(f"✅ Results CSV created at: {results_path}")
 
+    if os.path.exists(plot_runs_path):
+        shutil.copy(plot_runs_path, os.path.join(results_dir, "plot_runs.json"))
+        print(f"📄 plot_runs.json copied to: {results_dir}")
+    else:
+        print("⚠️  plot_runs.json not found. Skipped copying.")
+
+initialize_results_csv()
+
+# ========== Config Handling ==========
 def update_config(data_balancing, semi_supervised):
     with open(config_path, 'r') as f:
         config = json.load(f)
-
     config['data_balancing'] = data_balancing
     config['semi_supervised'].update(semi_supervised)
-
     with open(config_path, 'w') as f:
         json.dump(config, f, indent=4)
 
-def run_test(model, tool, data_balancing, semi_supervised):
-    # Update config.json
+# ========== Parse Classification Report ==========
+def parse_classification_report(file_path):
+    metrics = {
+        "accuracy": 0.0,
+        "macro_precision": 0.0,
+        "macro_recall": 0.0,
+        "macro_f1": 0.0
+    }
+    class_f1_scores = {}
+
+    with open(file_path, "r") as f:
+        lines = f.readlines()
+
+    for line in lines:
+        parts = line.strip().split()
+        if not parts or len(parts) < 2:
+            continue
+        if parts[0].lower() == "accuracy":
+            try:
+                metrics["accuracy"] = float(parts[-2])
+            except:
+                continue
+        elif parts[0].lower() == "macro" and "avg" in parts[1]:
+            try:
+                metrics["macro_precision"] = float(parts[2])
+                metrics["macro_recall"] = float(parts[3])
+                metrics["macro_f1"] = float(parts[4])
+            except:
+                continue
+        elif parts[0].lower() not in ["accuracy", "macro", "weighted", "micro"] and len(parts) >= 4:
+            class_label = parts[0]
+            try:
+                f1 = float(parts[3])
+                class_f1_scores[f"f1_{class_label}"] = f1
+            except:
+                continue
+
+    return {**metrics, **class_f1_scores}
+
+# ========== Get Latest Run Directory ==========
+def get_latest_run_path(model):
+    model_dir = os.path.join(cwd, "../", "experiments", model)
+    if not os.path.exists(model_dir):
+        return None
+    run_dirs = [d for d in os.listdir(model_dir) if d.startswith("run_")]
+    run_dirs = sorted(run_dirs, key=lambda x: int(x.split('_')[-1]), reverse=True)
+    if not run_dirs:
+        return None
+    return os.path.join(model_dir, run_dirs[0], "metrics_results", "classification_report.txt"), run_dirs[0].split("_")[-1]
+
+# ========== Run One Experiment ==========
+def run_test(model, tool, sensor, data_balancing, semi_supervised):
     update_config(data_balancing, semi_supervised)
 
-    # Build the command
-    cmd = [
-        sys.executable, "main.py",
-        "--model", model,
-        "--tool", tool,
-        "--sensor", "all"
-    ]
-
     print(f"\n=== Running Test ===")
-    print(f"Model: {model}, Tool: {tool}, Sensor: All")
+    print(f"Model: {model}, Tool: {tool}, Sensor: {sensor}")
     print(f"Data Balancing: {data_balancing}")
     print(f"Semi-supervised: {semi_supervised}")
-    print(f"Command: {' '.join(cmd)}")
 
-    # Directory of this script (test_runner.py)
-    src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-    # Copy current environment variables and add PYTHONPATH pointing to src/
-    env = os.environ.copy()
-    env["PYTHONPATH"] = src_dir
-    env["VIRTUAL_ENV"] = os.path.dirname(sys.executable)
-    env["PATH"] = os.path.dirname(sys.executable) + os.pathsep + env["PATH"]
-
-    # Run the command
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True, cwd=src_dir, env=env)
+        train_and_test(model, tool, sensor)
         print("✅ Test Passed")
+
+        report_path, run_no = get_latest_run_path(model)
+        if report_path and os.path.exists(report_path):
+            metrics = parse_classification_report(report_path)
+        else:
+            print("⚠️  No classification report found!")
+            metrics = {"accuracy": 0.0, "macro_f1": 0.0}
+
+        # Create result row
+        new_row = {
+            "Run No.": run_no,
+            "model": model,
+            "tool": tool,
+            "sensor": sensor,
+            "data_balancing": ",".join(data_balancing) if data_balancing else "none",
+            "semi_supervised": semi_supervised["active"],
+            "strategy": semi_supervised.get("strategy", "none"),
+            "labelled_ratio": semi_supervised.get("labelled_ratio", 1.0),
+        }
+        new_row.update(metrics)
+
+        # Load and expand dataframe if needed
+        df = pd.read_csv(results_path)
+
+        # Add any new class-level columns if missing
+        for key in metrics:
+            if key.startswith("f1_") and key not in df.columns:
+                df[key] = None
+
+        df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+        df.to_csv(results_path, index=False)
+
     except subprocess.CalledProcessError as e:
         print("❌ Test Failed")
         print("Error Output:", e.stderr)
-    time.sleep(1)  # Optional: Pause between runs to avoid system overload
+
+    time.sleep(1)
+
+def load_plot_configs(json_path):
+    with open(json_path, 'r') as f:
+        return json.load(f)
 
 def main():
-    for model, tool, data_balancing, semi_supervised in itertools.product(
-        models, tools, data_balancing_options, semi_supervised_strategies
-    ):
-        run_test(model, tool, data_balancing, semi_supervised)
+    plot_configs = load_plot_configs(plot_runs_path)
+    for config in plot_configs:
+        run_test(
+            config["model"],
+            config["tool"],
+            config["sensor"],
+            config.get("data_balancing", []),
+            config.get("semi_supervised", {"active": False})
+        )
+    generate_all_plots(results_dir)
 
 if __name__ == "__main__":
     main()
