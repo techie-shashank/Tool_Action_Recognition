@@ -1,15 +1,16 @@
 {
-    "batch_size": 64,
-    "epochs": 5,
-    "learning_rate": 0.001,
+    "batch_size": 128,
+    "epochs": 30,
+    "learning_rate": 0.002,
     "data_ratio": 1.0,
     "semi_supervised": {
         "active": true,
-        "strategy": "mean_teacher",
-        "labelled_ratio": 0.75
+        "strategy": "contrastive",
+        "labelled_ratio": 0.25
     },
     "data_balancing": [
-        "oversample"
+        "oversample",
+        "augment"
     ],
     "l1_lambda": 0.1,
     "gradient_clip": 0.5,
