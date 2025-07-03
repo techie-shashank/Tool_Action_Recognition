@@ -1,94 +1,163 @@
+import copy
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
-from utils import train_model
 from logger import logger
-import copy
+from utils import train_model  # your existing supervised training function
+
 import os
 import json
 
-# Load config
 config_path = os.path.join(r'../', "config.json")
 with open(config_path, 'r') as config_file:
     config = json.load(config_file)
 
-def update_ema(student_model, teacher_model, alpha):
+
+def update_ema_variables(student_model, teacher_model, ema_decay):
+    """
+    Update teacher parameters as EMA of student parameters.
+    teacher = ema_decay * teacher + (1 - ema_decay) * student
+    """
     for student_param, teacher_param in zip(student_model.parameters(), teacher_model.parameters()):
-        teacher_param.data.mul_(alpha).add_(student_param.data, alpha=1 - alpha)
+        teacher_param.data.mul_(ema_decay).add_(student_param.data * (1 - ema_decay))
 
-def train_mean_teacher(student_model, labeled_loader, unlabeled_loader, val_loader,
-                       criterion, optimizer, device, num_epochs=10, alpha=0.99, lambda_consistency=1.0):
-    logger.info("Starting Mean Teacher training...")
-    
-    semi_config = config.get("semi_supervised", {})
-    alpha = semi_config.get("alpha", 0.99)
-    lambda_consistency = semi_config.get("lambda_consistency", 1.0)
-    
-    teacher_model = copy.deepcopy(student_model)
+
+def get_consistency_loss(student_logits, teacher_logits, loss_type="mse"):
+    """
+    Calculate consistency loss between student and teacher outputs.
+    Supported loss types: mse, kl, ce
+    """
+    if loss_type == "mse":
+        # MSE on softmax probabilities
+        student_prob = F.softmax(student_logits, dim=1)
+        teacher_prob = F.softmax(teacher_logits, dim=1)
+        loss = F.mse_loss(student_prob, teacher_prob)
+    elif loss_type == "kl":
+        # KL divergence between teacher and student probs
+        student_log_prob = F.log_softmax(student_logits, dim=1)
+        teacher_prob = F.softmax(teacher_logits, dim=1)
+        loss = F.kl_div(student_log_prob, teacher_prob, reduction='batchmean')
+    elif loss_type == "ce":
+        # Cross entropy using teacher predictions as soft targets (soft labels)
+        teacher_prob = F.softmax(teacher_logits, dim=1)
+        loss = -(teacher_prob * F.log_softmax(student_logits, dim=1)).sum(dim=1).mean()
+    else:
+        raise ValueError(f"Unsupported consistency loss type: {loss_type}")
+    return loss
+
+
+def mean_teacher_pretrain(model, unlabeled_loader, device, ema_decay=0.99, consistency_weight=1.0, consistency_type="mse", epochs=10):
+    """
+    Pretrain student and teacher on unlabeled data using consistency loss only.
+    """
+    teacher_model = copy.deepcopy(model)
     teacher_model.eval()
-    
-    student_model.train()
-    
-    for epoch in range(num_epochs):
-        student_model.train()
-        teacher_model.eval()
-        
+    for param in teacher_model.parameters():
+        param.requires_grad = False
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=config.get("learning_rate", 1e-3))
+
+    logger.info("Starting Mean Teacher pretraining on unlabeled data...")
+    for epoch in range(epochs):
+        model.train()
         total_loss = 0.0
-        
-        labeled_iter = iter(labeled_loader)
-        unlabeled_iter = iter(unlabeled_loader)
-        
-        for step in range(min(len(labeled_loader), len(unlabeled_loader))):
-            try:
-                x_l, y_l = next(labeled_iter)
-            except StopIteration:
-                labeled_iter = iter(labeled_loader)
-                x_l, y_l = next(labeled_iter)
-
-            try:
-                x_u, _ = next(unlabeled_iter)
-            except StopIteration:
-                unlabeled_iter = iter(unlabeled_loader)
-                x_u, _ = next(unlabeled_iter)
-
-            x_l, y_l = x_l.to(device), y_l.to(device)
-            x_u = x_u.to(device)
-
-            # Forward pass
-            student_outputs_l = student_model(x_l)
-            supervised_loss = criterion(student_outputs_l, y_l)
-
-            # Consistency loss on unlabeled data
-            with torch.no_grad():
-                teacher_outputs_u = teacher_model(x_u)
-            student_outputs_u = student_model(x_u)
-            consistency_loss = F.mse_loss(student_outputs_u, teacher_outputs_u.detach())
-
-            total_batch_loss = supervised_loss + lambda_consistency * consistency_loss
+        for x_batch, _ in unlabeled_loader:
+            x = x_batch.to(device)
 
             optimizer.zero_grad()
-            total_batch_loss.backward()
+
+            outputs_student = model(x)
+            with torch.no_grad():
+                outputs_teacher = teacher_model(x)
+
+            consistency_loss = get_consistency_loss(outputs_student, outputs_teacher, consistency_type)
+            loss = consistency_weight * consistency_loss
+
+            loss.backward()
             optimizer.step()
 
-            # EMA update
-            update_ema(student_model, teacher_model, alpha)
+            update_ema_variables(model, teacher_model, ema_decay)
+            total_loss += loss.item()
 
-            total_loss += total_batch_loss.item()
+        avg_loss = total_loss / len(unlabeled_loader)
+        logger.info(f"[Mean Teacher Pretrain Epoch {epoch + 1}] Consistency Loss: {avg_loss:.4f}")
 
-        avg_loss = total_loss / len(labeled_loader)
-        logger.info(f"[Epoch {epoch+1}] Total Loss: {avg_loss:.4f}")
+    return teacher_model
 
-        # Optional: Evaluate on validation set
-        if val_loader:
-            student_model.eval()
-            correct, total = 0, 0
+
+def train_mean_teacher(model, labeled_loader, unlabeled_loader, val_loader, criterion, optimizer, device,
+                       consistency_weight=1.0, ema_decay=0.99, consistency_type="mse", num_epochs=10):
+    """
+    Train student and teacher jointly on labeled + unlabeled data.
+    Supervised loss on labeled data + consistency loss on unlabeled data.
+    """
+
+    teacher_model = copy.deepcopy(model)
+    teacher_model.eval()
+    for param in teacher_model.parameters():
+        param.requires_grad = False
+
+    for epoch in range(num_epochs):
+        model.train()
+        total_loss = 0.0
+        supervised_loss_total = 0.0
+        consistency_loss_total = 0.0
+
+        labeled_iter = iter(labeled_loader)
+        unlabeled_iter = iter(unlabeled_loader)
+
+        num_batches = max(len(labeled_loader), len(unlabeled_loader))
+
+        for _ in range(num_batches):
+            optimizer.zero_grad()
+
+            # Labeled batch
+            try:
+                x_labeled, y_labeled = next(labeled_iter)
+            except StopIteration:
+                labeled_iter = iter(labeled_loader)
+                x_labeled, y_labeled = next(labeled_iter)
+
+            x_labeled = x_labeled.to(device)
+            y_labeled = y_labeled.to(device)
+
+            # Unlabeled batch
+            try:
+                x_unlabeled, _ = next(unlabeled_iter)
+            except StopIteration:
+                unlabeled_iter = iter(unlabeled_loader)
+                x_unlabeled, _ = next(unlabeled_iter)
+            x_unlabeled = x_unlabeled.to(device)
+
+            # Forward pass student on labeled
+            outputs_labeled = model(x_labeled)
+            loss_supervised = criterion(outputs_labeled, y_labeled)
+
+            # Forward pass student and teacher on unlabeled
+            outputs_unlabeled_student = model(x_unlabeled)
             with torch.no_grad():
-                for x_val, y_val in val_loader:
-                    x_val, y_val = x_val.to(device), y_val.to(device)
-                    outputs = student_model(x_val)
-                    preds = torch.argmax(outputs, dim=1)
-                    correct += (preds == y_val).sum().item()
-                    total += y_val.size(0)
-            acc = 100 * correct / total
-            logger.info(f"Validation Accuracy: {acc:.2f}%")
+                outputs_unlabeled_teacher = teacher_model(x_unlabeled)
+
+            loss_consistency = get_consistency_loss(outputs_unlabeled_student, outputs_unlabeled_teacher, consistency_type)
+
+            loss = loss_supervised + consistency_weight * loss_consistency
+            loss.backward()
+            optimizer.step()
+
+            update_ema_variables(model, teacher_model, ema_decay)
+
+            total_loss += loss.item()
+            supervised_loss_total += loss_supervised.item()
+            consistency_loss_total += loss_consistency.item()
+
+        avg_loss = total_loss / num_batches
+        avg_supervised = supervised_loss_total / num_batches
+        avg_consistency = consistency_loss_total / num_batches
+        logger.info(
+            f"[Epoch {epoch + 1}] Total Loss: {avg_loss:.4f} "
+            f"(Supervised: {avg_supervised:.4f}, Consistency: {avg_consistency:.4f})"
+        )
+
+        # You can add validation evaluation here if desired
+
+    logger.info("Mean Teacher training finished.")
