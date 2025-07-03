@@ -46,45 +46,6 @@ def get_consistency_loss(student_logits, teacher_logits, loss_type="mse"):
     return loss
 
 
-def mean_teacher_pretrain(model, unlabeled_loader, device, ema_decay=0.99, consistency_weight=1.0, consistency_type="mse", epochs=10):
-    """
-    Pretrain student and teacher on unlabeled data using consistency loss only.
-    """
-    teacher_model = copy.deepcopy(model)
-    teacher_model.eval()
-    for param in teacher_model.parameters():
-        param.requires_grad = False
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=config.get("learning_rate", 1e-3))
-
-    logger.info("Starting Mean Teacher pretraining on unlabeled data...")
-    for epoch in range(epochs):
-        model.train()
-        total_loss = 0.0
-        for x_batch, _ in unlabeled_loader:
-            x = x_batch.to(device)
-
-            optimizer.zero_grad()
-
-            outputs_student = model(x)
-            with torch.no_grad():
-                outputs_teacher = teacher_model(x)
-
-            consistency_loss = get_consistency_loss(outputs_student, outputs_teacher, consistency_type)
-            loss = consistency_weight * consistency_loss
-
-            loss.backward()
-            optimizer.step()
-
-            update_ema_variables(model, teacher_model, ema_decay)
-            total_loss += loss.item()
-
-        avg_loss = total_loss / len(unlabeled_loader)
-        logger.info(f"[Mean Teacher Pretrain Epoch {epoch + 1}] Consistency Loss: {avg_loss:.4f}")
-
-    return teacher_model
-
-
 def train_mean_teacher(model, labeled_loader, unlabeled_loader, val_loader, criterion, optimizer, device,
                        consistency_weight=1.0, ema_decay=0.99, consistency_type="mse", num_epochs=10):
     """

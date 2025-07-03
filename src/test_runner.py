@@ -119,7 +119,7 @@ def run_test(model, tool, sensor, data_balancing, semi_supervised, data_ratio):
     print(f"Semi-supervised: {semi_supervised}")
 
     try:
-        train_and_test(model, tool, sensor_str)
+        train_and_test(model, tool, sensor)
         print("✅ Test Passed")
 
         report_path, run_no = get_latest_run_path(model)

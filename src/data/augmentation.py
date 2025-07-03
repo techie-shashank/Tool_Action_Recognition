@@ -67,32 +67,24 @@ def time_warp(x, warp_factor_range=(0.8, 1.2)):
     return x_warped
 
 
-def augment(x, device='cpu'):
-    """
-    Apply random augmentations to a single time series sample.
+def augment(x, augmentations=None, device='cpu'):
+    if augmentations is None:
+        augmentations = ["jitter", "scaling", "gaussian_noise", "magnitude_scaling", "time_warp"]
 
-    Args:
-        x (np.ndarray or torch.Tensor): Input time series (Time x Features)
-        device: Target device for torch.Tensor outputs.
-
-    Returns:
-        Augmented sample (same type as input)
-    """
-    # Convert to tensor for uniform handling
     x_aug = x
 
-    if np.random.rand() < 0.5:
+    if "jitter" in augmentations and np.random.rand() < 0.5:
         x_aug = random_jitter(x_aug)
-    if np.random.rand() < 0.5:
+    if "scaling" in augmentations and np.random.rand() < 0.5:
         x_aug = random_scaling(x_aug)
-    if np.random.rand() < 0.3:
+    if "gaussian_noise" in augmentations and np.random.rand() < 0.3:
         x_aug = add_gaussian_noise(x_aug)
-    if np.random.rand() < 0.3:
+    if "magnitude_scaling" in augmentations and np.random.rand() < 0.3:
         x_aug = magnitude_scaling(x_aug)
-    if np.random.rand() < 0.2:
+    if "time_warp" in augmentations and np.random.rand() < 0.2:
         x_aug = time_warp(x_aug)
 
-    # Ensure type matches input
+    # Convert to original type
     if isinstance(x, np.ndarray) and isinstance(x_aug, torch.Tensor):
         x_aug = to_numpy(x_aug)
     if isinstance(x, torch.Tensor) and isinstance(x_aug, np.ndarray):
@@ -101,19 +93,9 @@ def augment(x, device='cpu'):
     return x_aug
 
 
-def augment_batch(x_batch, device='cpu'):
-    """
-    Vectorized batch wrapper for sample-wise augmentations.
-
-    Args:
-        x_batch (torch.Tensor): Batch of time series (batch_size x time_steps x features)
-        device: Target device.
-
-    Returns:
-        Augmented batch (torch.Tensor)
-    """
-    augmented_samples = []
-    for xi in x_batch:
-        xi_aug = augment(xi, device=device)
-        augmented_samples.append(xi_aug)
+def augment_batch(x_batch, augmentations=None, device='cpu'):
+    augmented_samples = [
+        augment(xi, augmentations=augmentations, device=device)
+        for xi in x_batch
+    ]
     return torch.stack(augmented_samples).to(device)

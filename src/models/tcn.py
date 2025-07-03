@@ -3,6 +3,7 @@ from pytorch_tcn import TCN
 import json
 import os
 
+
 class TCNClassifier(nn.Module):
     def __init__(self, input_channels, time_steps, num_classes, 
                  num_channels=None, kernel_size=4, dropout=0.2):

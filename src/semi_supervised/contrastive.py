@@ -60,14 +60,18 @@ def contrastive_pretrain(model, unlabeled_loader, device, epochs=10):
     model.train()
     projection_head.train()
     logger.info("Starting contrastive pretraining...")
+    semi_config = config.get("semi_supervised", {})
+    contrastive_augs = semi_config.get(
+        "contrastive_augmentations", ["jitter", "scaling", "gaussian_noise"]
+    )
 
     for epoch in range(epochs):
         total_loss = 0.0
         for x_batch, _ in unlabeled_loader:
             x = x_batch.to(device)
 
-            x1 = augment_batch(x_batch, device=device)
-            x2 = augment_batch(x_batch, device=device)
+            x1 = augment_batch(x, augmentations=contrastive_augs, device=device)
+            x2 = augment_batch(x, augmentations=contrastive_augs, device=device)
 
             optimizer.zero_grad()
             h1 = model.forward_encoder_only(x1)
@@ -80,8 +84,7 @@ def contrastive_pretrain(model, unlabeled_loader, device, epochs=10):
             # Normalize embeddings (recommended)
             z1 = F.normalize(z1, dim=1)
             z2 = F.normalize(z2, dim=1)
-            
-            semi_config = config.get("semi_supervised", {})
+
             temperature = semi_config.get("temperature", 0.5) # get temperature from config, default to 0.5
 
             loss = nt_xent_loss(z1, z2, temperature=temperature)
