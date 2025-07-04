@@ -136,6 +136,7 @@ def load_data(tool, sensors):
     logger.info("Loading and preprocessing data...")
     data_loader = ToolTrackingDataLoader(source=r"./../data/tool-tracking-data")
     Xt, y, classes = data_loader.load_and_process(tool, sensors)
+    # data_loader.plot_fused_window(Xt, window_index=0)
     Xt, y = remove_undefined_class(Xt, y)
     le = LabelEncoder()
     y = le.fit_transform(y)

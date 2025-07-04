@@ -12,6 +12,7 @@ from fhgutils import (
 from scipy.signal import resample
 from collections import Counter
 import librosa
+import matplotlib.pyplot as plt
 
 
 class ToolTrackingDataLoader:
@@ -96,6 +97,134 @@ class ToolTrackingDataLoader:
 
         return Xt_stacked, Xc_filtered, y_filtered
 
+        # ===== Visualization helpers =====
+
+    def plot_raw_vs_downsampled(self, raw_windows, downsampled_windows, sensor_name, window_idx=0):
+        t_raw = np.arange(raw_windows[window_idx].shape[0])
+        t_down = np.linspace(0, raw_windows[window_idx].shape[0] - 1, downsampled_windows[window_idx].shape[0])
+
+        plt.figure(figsize=(12, 6))
+        n_features = raw_windows[window_idx].shape[1]
+        for feat_idx in range(min(n_features, 3)):
+            plt.subplot(min(n_features, 3), 1, feat_idx + 1)
+            plt.plot(t_raw, raw_windows[window_idx][:, feat_idx], label="Raw")
+            plt.plot(t_down, downsampled_windows[window_idx][:, feat_idx], label="Downsampled", linestyle='--')
+            plt.title(f"{sensor_name} Feature {feat_idx} Window {window_idx}")
+            plt.xlabel("Time (samples)")
+            plt.ylabel("Value")
+            plt.legend()
+        plt.tight_layout()
+        plt.show()
+
+    def plot_fused_sensors(self, Xt_fused, sensor_dims, window_idx=0):
+        plt.figure(figsize=(15, 3 * len(sensor_dims)))
+        start = 0
+        for i, (sensor, dim) in enumerate(sensor_dims.items()):
+            end = start + dim
+            plt.subplot(len(sensor_dims), 1, i + 1)
+            plt.plot(Xt_fused[window_idx, :, start:end])
+            plt.title(f"Fused Sensor: {sensor}")
+            plt.xlabel("Time Step")
+            plt.ylabel("Value")
+            start = end
+        plt.tight_layout()
+        plt.show()
+
+    def plot_raw_vs_fused(self, raw_Xt_list, Xt_fused, window_index=0):
+        """
+        Compares raw sensor data windows vs fused data window for the same index.
+
+        Args:
+            raw_Xt_list (list of np.ndarray): List of raw segmented data arrays, one per sensor
+                                              Each element shape: (num_windows, window_length_raw, features)
+            Xt_fused (np.ndarray): Fused data array (num_windows, window_length_fused, total_features)
+            window_index (int): Index of the window to compare
+        """
+        feature_counts = {
+            'acc': 3,
+            'gyr': 3,
+            'mag': 3,
+            'mic': 1,
+        }
+        sensors = list(feature_counts.keys())
+        indices = np.cumsum([0] + list(feature_counts.values()))
+
+        num_sensors = len(sensors)
+        plt.figure(figsize=(15, 4 * num_sensors))
+
+        time_fused = np.arange(Xt_fused.shape[1])
+
+        for i, sensor in enumerate(sensors):
+            # Raw data for this sensor
+            raw_data = raw_Xt_list[i][window_index]
+            time_raw = np.arange(raw_data.shape[0])
+
+            # Fused data slice for this sensor
+            start_idx = indices[i]
+            end_idx = indices[i + 1]
+            fused_data = Xt_fused[window_index, :, start_idx:end_idx]
+
+            plt.subplot(num_sensors, 2, 2 * i + 1)
+            for f in range(raw_data.shape[1]):
+                plt.plot(time_raw, raw_data[:, f], label=f'{sensor}_feat{f}')
+            plt.title(f'Raw {sensor} data - window {window_index}')
+            plt.xlabel('Sample Index')
+            plt.ylabel('Signal')
+            plt.legend()
+
+            plt.subplot(num_sensors, 2, 2 * i + 2)
+            for f in range(fused_data.shape[1]):
+                plt.plot(time_fused, fused_data[:, f], label=f'{sensor}_feat{f}')
+            plt.title(f'Fused {sensor} data - window {window_index}')
+            plt.xlabel('Sample Index')
+            plt.ylabel('Signal')
+            plt.legend()
+
+        plt.tight_layout()
+        plt.show()
+
+    def plot_fused_window(self, Xt_fused, window_index=0):
+        """
+        Plots the fused sensor data for a single window to verify timestamp alignment visually.
+
+        Args:
+            Xt_fused (np.ndarray): Fused data array of shape (num_windows, window_length, total_features)
+            window_index (int): Index of the window to plot
+        """
+        feature_counts = {
+            'acc': 3,
+            'gyr': 3,
+            'mag': 3,
+            'mic': 1,
+        }
+        indices = np.cumsum([0] + list(feature_counts.values()))
+        sensors = list(feature_counts.keys())
+
+        plt.figure(figsize=(12, 8))
+        time = np.arange(Xt_fused.shape[1])  # sample indices as proxy for time
+
+        for i, sensor in enumerate(sensors):
+            start_idx = indices[i]
+            end_idx = indices[i + 1]
+            sensor_data = Xt_fused[window_index, :, start_idx:end_idx]
+
+            plt.subplot(len(sensors), 1, i + 1)
+            for feature_idx in range(sensor_data.shape[1]):
+                plt.plot(time, sensor_data[:, feature_idx], label=f'{sensor}_feat{feature_idx}')
+            plt.title(f'Sensor: {sensor} - Window {window_index}')
+            plt.xlabel('Sample Index')
+            plt.ylabel('Signal')
+            plt.legend(loc='upper right')
+
+        plt.tight_layout()
+        plt.show()
+
+    def print_data_shapes(self, windowed_data_dict):
+        print("Data shape summary:")
+        for sensor, windows in windowed_data_dict.items():
+            print(
+                f"  {sensor}: {len(windows)} windows, window shape: {windows[0].shape if len(windows) > 0 else 'N/A'}")
+
     def process_segmented_data(self, X_trans, y_trans, desc_filters=None):
 
         if not desc_filters or 'all' in desc_filters:
@@ -105,6 +234,8 @@ class ToolTrackingDataLoader:
 
         Xt_list = []
         max_length = 0
+        raw_Xt_dict = {}
+        raw_Xt_list = []
 
         for desc_filter in desc_filters:
             print(f"[INFO] Extracting segmented data for filter: {desc_filter}")
@@ -112,25 +243,36 @@ class ToolTrackingDataLoader:
             Xt, Xc, y = self.filter_and_stack_sequences(Xt, Xc, y)
             Xt = Xt[:, :, 1:]  # Drop timestamp (first column)
 
+            raw_Xt_dict[desc_filter] = Xt.copy()  # Store raw pre-downsample for visualization
+
+            raw_Xt_list.append(Xt)
+
             # Special processing for microphone
             if desc_filter == 'mic':
                 Xt = self.extract_mfcc_features(Xt)
 
+
             # For magnetometer, downsample to 102 Hz if needed
             elif desc_filter == 'mag':
                 print("[INFO] Downsampling magnetometer")
-                target_length = 62  # example window length for acc/gyr
-                Xt = np.array([resample(window, target_length, axis=0) for window in Xt])
+                target_length = 41
+                downsampled = np.array([resample(window, target_length, axis=0) for window in Xt])
+                # self.plot_raw_vs_downsampled(raw_Xt_dict[desc_filter], downsampled, desc_filter)
+                Xt = downsampled
 
             # For acc, gyr, or other sensors, keep or resample to fixed length (say 41)
             else:
-                target_length = 62
-                Xt = np.array([resample(window, target_length, axis=0) for window in Xt])
+                target_length = 41
+                downsampled = np.array([resample(window, target_length, axis=0) for window in Xt])
+                # self.plot_raw_vs_downsampled(raw_Xt_dict[desc_filter], downsampled, desc_filter)
+                Xt = downsampled
 
 
             Xt_f, _, y_f = filter_labels(labels=[-1], Xt=Xt, Xc=Xc, y=y)
             Xt_list.append(Xt_f)
             max_length = max(max_length, Xt_f.shape[1])
+
+        # self.print_data_shapes({desc: Xt for desc, Xt in zip(desc_filters, Xt_list)})
 
         # Step 2: Align window counts
         min_windows = min([Xt.shape[0] for Xt in Xt_list])  # Minimum number of windows across all sensors
@@ -153,6 +295,18 @@ class ToolTrackingDataLoader:
         # Fuse sensor data horizontally
         Xt_fused = np.concatenate(resampled_Xt_list, axis=-1)
         y_f = one_label_per_window(y=y_f)
+
+        # Visualize fused sensors for first window
+        # Define sensor dims here; adjust based on your features per sensor after processing
+        sensor_dims = {
+            'acc': 3,
+            'gyr': 3,
+            'mag': 3,
+            'mic': 1  # MFCC outputs 1 feature in this example
+        }
+        # self.plot_fused_sensors(Xt_fused, sensor_dims)
+        # self.plot_raw_vs_fused(raw_Xt_list, Xt_fused, window_index=65)
+
         return Xt_fused, y_f
 
     def load_and_process(self, tool, sensors):

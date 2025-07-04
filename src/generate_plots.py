@@ -268,8 +268,6 @@ def format_aug_list(aug_list):
     return "+".join(sorted(aug_list))
 
 def plot_contrastive_augmentation_ablation(df: pd.DataFrame, output_dir: str):
-    os.makedirs(output_dir, exist_ok=True)
-
     # Parse and extract config
     df["semi_supervised"] = df.apply(parse_ssl_config, axis=1)
     df["augmentations"] = df["semi_supervised"].apply(lambda cfg: format_aug_list(cfg.get("contrastive_augmentations", [])))
@@ -312,6 +310,56 @@ def plot_contrastive_augmentation_ablation(df: pd.DataFrame, output_dir: str):
     plt.savefig(output_path, bbox_inches="tight")
     plt.close()
     print(f"✅ Saved augmentation ablation plot to: {output_path}")
+
+
+def plot_mean_teacher_consistency_ablation(df: pd.DataFrame, output_dir: str):
+    """
+    Plots macro F1 vs consistency weight for Mean Teacher strategy.
+    """
+    # Parse and extract config
+    df["semi_supervised"] = df.apply(parse_ssl_config, axis=1)
+    df["labelled_ratio"] = df["semi_supervised"].apply(lambda cfg: cfg.get("labelled_ratio", None))
+    df["consistency_weight"] = df["semi_supervised"].apply(lambda cfg: cfg.get("consistency_weight", None))
+
+    # Filter Mean Teacher at 25% labeled
+    df_mt = df[
+        (df["method"] == "Mean Teacher") &
+        (df["labelled_ratio"] == 0.25)
+    ].copy()
+
+    if df_mt.empty:
+        print("⚠️ No data available for Mean Teacher consistency weight ablation.")
+        return
+
+    # Sort weights numerically for cleaner plot
+    df_mt["consistency_weight"] = pd.to_numeric(df_mt["consistency_weight"], errors='coerce')
+    df_mt = df_mt.dropna(subset=["consistency_weight"])
+
+    for model in df_mt["model"].unique():
+        subset = df_mt[df_mt["model"] == model]
+
+        if subset.empty:
+            continue
+
+        plt.figure(figsize=(6, 4))
+        sns.lineplot(
+            data=subset.sort_values("consistency_weight"),
+            x="consistency_weight",
+            y="macro_f1",
+            marker="o"
+        )
+        plt.title(f"{model.upper()} - Mean Teacher: Consistency Weight Ablation")
+        plt.xlabel("Consistency Weight")
+        plt.ylabel("Macro-F1 Score")
+        plt.grid(True)
+        plt.tight_layout()
+
+        save_path = os.path.join(output_dir, f"{model}_mean_teacher_consistency_ablation.png")
+        plt.savefig(save_path)
+        plt.close()
+        print(f"✅ Saved: {save_path}")
+
+
 
 
 def generate_ssl_comparison_table(df: pd.DataFrame, output_dir: str):
@@ -389,7 +437,9 @@ def generate_all_plots(csv_path: str, output_dir: str = "plots"):
 
     # plot_confidence_threshold_ablation(df, output_dir)
 
-    plot_contrastive_augmentation_ablation(df, output_dir)
+    # plot_contrastive_augmentation_ablation(df, output_dir)
+
+    plot_mean_teacher_consistency_ablation(df, output_dir)
 
 if __name__ == "__main__":
     cwd = os.path.dirname(os.path.abspath(__file__))

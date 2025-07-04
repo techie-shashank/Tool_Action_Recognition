@@ -926,7 +926,67 @@
       "active": true,
       "strategy": "mean_teacher",
       "labelled_ratio": 0.25,
-      "contrastive_augmentations": ["jitter", "scaling", "gaussian_noise", "magnitude_scaling", "time_warp"]
+      "consistency_weight": 0.1
+    }
+  },
+  {
+    "model": "lstm",
+    "tool": "electric_screwdriver",
+    "sensor": ["all"],
+    "data_balancing": ["oversample"],
+    "semi_supervised": {
+      "active": true,
+      "strategy": "mean_teacher",
+      "labelled_ratio": 0.25,
+      "consistency_weight": 0.5
+    }
+  },
+  {
+    "model": "lstm",
+    "tool": "electric_screwdriver",
+    "sensor": ["all"],
+    "data_balancing": ["oversample"],
+    "semi_supervised": {
+      "active": true,
+      "strategy": "mean_teacher",
+      "labelled_ratio": 0.25,
+      "consistency_weight": 0.75
+    }
+  },
+  {
+    "model": "lstm",
+    "tool": "electric_screwdriver",
+    "sensor": ["all"],
+    "data_balancing": ["oversample"],
+    "semi_supervised": {
+      "active": true,
+      "strategy": "mean_teacher",
+      "labelled_ratio": 0.25,
+      "consistency_weight": 1.0
+    }
+  },
+  {
+    "model": "lstm",
+    "tool": "electric_screwdriver",
+    "sensor": ["all"],
+    "data_balancing": ["oversample"],
+    "semi_supervised": {
+      "active": true,
+      "strategy": "mean_teacher",
+      "labelled_ratio": 0.25,
+      "consistency_weight": 1.5
+    }
+  },
+  {
+    "model": "lstm",
+    "tool": "electric_screwdriver",
+    "sensor": ["all"],
+    "data_balancing": ["oversample"],
+    "semi_supervised": {
+      "active": true,
+      "strategy": "mean_teacher",
+      "labelled_ratio": 0.25,
+      "consistency_weight": 3.0
     }
   }
 

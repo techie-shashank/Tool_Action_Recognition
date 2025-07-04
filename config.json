@@ -1,16 +1,16 @@
 {
     "batch_size": 128,
-    "epochs": 30,
-    "learning_rate": 0.002,
+    "epochs": 50,
+    "learning_rate": 0.001,
     "data_ratio": 1.0,
     "semi_supervised": {
-        "active": true,
-        "strategy": "contrastive",
-        "labelled_ratio": 0.25
+        "active": false,
+        "strategy": "mean_teacher",
+        "labelled_ratio": 0.25,
+        "consistency_weight": 1.5
     },
     "data_balancing": [
-        "oversample",
-        "augment"
+        "oversample"
     ],
     "l1_lambda": 0.1,
     "gradient_clip": 0.5,
@@ -22,12 +22,12 @@
                 64
             ],
             "kernel_size": 5,
-            "dropout": 0.3
+            "dropout": 0.4
         },
         "lstm": {
-            "hidden_size": 32,
-            "num_layers": 1,
-            "dropout": 0.1
+            "hidden_size": 64,
+            "num_layers": 2,
+            "dropout": 0.05
         }
     }
 }

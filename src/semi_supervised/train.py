@@ -42,4 +42,4 @@ def train_semi_supervised(model, train_dataset, val_dataset, criterion, optimize
         train_contrastive(model, labeled_loader, unlabeled_loader, val_loader, criterion, optimizer, device, num_epochs)
     elif config["semi_supervised"]["strategy"] == "mean_teacher":
         logger.info("Using mean teacher learning strategy for semi-supervised learning.")
-        train_mean_teacher(model, labeled_loader, unlabeled_loader, val_loader, criterion, optimizer, device, num_epochs)
+        train_mean_teacher(model, labeled_loader, unlabeled_loader, val_loader, criterion, optimizer, device, consistency_weight=config.get('semi_supervised', {}).get('consistency_weight', 1.0), num_epochs=num_epochs)

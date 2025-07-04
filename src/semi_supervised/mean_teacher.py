@@ -119,6 +119,4 @@ def train_mean_teacher(model, labeled_loader, unlabeled_loader, val_loader, crit
             f"(Supervised: {avg_supervised:.4f}, Consistency: {avg_consistency:.4f})"
         )
 
-        # You can add validation evaluation here if desired
-
     logger.info("Mean Teacher training finished.")

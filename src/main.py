@@ -1,8 +1,9 @@
 import argparse
 import os
+import random
 
 import torch
-from webcolors import names
+import numpy as np
 
 from logger import configure_logger, logger
 from data.preprocessing import split_data, preprocess_signals
@@ -19,8 +20,17 @@ def parse_arguments():
     parser.add_argument("--sensor", type=str, nargs='+', default='all', help="List of sensors to filter data")
     return parser.parse_args()
 
+def set_seed(seed=42):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 def train_and_test(model_name, tool_name, sensor_name):
+    set_seed()
     experiments_dir = get_experiments_dir(model_name)
 
     log_path = os.path.join(experiments_dir, "main.log")
@@ -47,7 +57,7 @@ def train_and_test(model_name, tool_name, sensor_name):
     evaluate_model(model, X_test, y_test, device, le, experiments_dir)
 
 
-if names == "__main__":
+if __name__ == "__main__":
     args = parse_arguments()
     model_name = args.model
     tool_name = args.tool
