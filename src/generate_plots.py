@@ -78,7 +78,7 @@ def plot_ssl_vs_label_fraction(df: pd.DataFrame, output_dir: str):
             style="method",
             marker="o"
         )
-        plt.title(f"{model.upper()} - SSL Macro-F1 vs Labeled Data %")
+        plt.title(f"{model.upper()} - SSL Macro-F1 vs Labeled Data % (Electric Screwdriver)")
         plt.xlabel("Labeled Data Fraction")
         plt.ylabel("Macro-F1 Score")
         plt.xticks([0.1, 0.25, 0.5, 0.75, 1.0], labels=["10%", "25%", "50%", "70%", "100%"])
@@ -232,8 +232,24 @@ def plot_ssl_per_class_performance(df, output_dir, labelled_ratio, title):
             value_name="F1 Score"
         )
 
-        # Clean class names, e.g., f1_class1 -> class1
-        plot_df["Class"] = plot_df["Class"].str.replace("f1_", "")
+        # Class label to name mapping
+        class_label_to_name = {
+            2: 'tightening', 3: 'untightening', 4: 'motor_activity_cw', 5: 'motor_activity_ccw',
+            6: 'manual_motor_rotation', 7: 'shaking', 8: 'undefined', 14: 'tightening_double',
+            25: 'pull_trigger', 28: 'pull_trigger_not_removed', 29: 'pull_trigger_air',
+            30: 'pull_trigger_air_with_rivet', 38: 'impact'
+        }
+
+        # Clean class names: f1_2 → 2 → 'tightening'
+        plot_df["Class"] = (
+            plot_df["Class"]
+            .str.replace("f1_", "")
+            .astype(int)
+            .map(class_label_to_name)
+        )
+
+        # Optional: sort by class name for readability
+        plot_df = plot_df.sort_values("Class")
 
         plt.figure(figsize=(12, 6))
         sns.barplot(
@@ -244,6 +260,7 @@ def plot_ssl_per_class_performance(df, output_dir, labelled_ratio, title):
             ci=None,
             palette="Set2"
         )
+        plt.xticks(rotation=45, ha='right')
         plt.title(f"{model.upper()} - {title}")
         plt.xlabel("Class")
         plt.ylabel("F1 Score")
@@ -426,10 +443,10 @@ def generate_all_plots(csv_path: str, output_dir: str = "plots"):
     df = pd.read_csv(csv_path)
     df["method"] = df.apply(label_method, axis=1)
 
-    # plot_ssl_vs_label_fraction(df, output_dir)
+    plot_ssl_vs_label_fraction(df, output_dir)
     #
-    # title = "Per-Class F1 Scores for SSL Methods at 25% Labeled Data"
-    # plot_ssl_per_class_performance(df, output_dir, [0.25], title)
+    title = "Per-Class F1 Scores for SSL Methods at 25% Labeled Data (Electric Screwdriver)"
+    plot_ssl_per_class_performance(df, output_dir, [0.25], title)
 
     # generate_ssl_comparison_table(df, output_dir)
 
@@ -439,7 +456,7 @@ def generate_all_plots(csv_path: str, output_dir: str = "plots"):
 
     # plot_contrastive_augmentation_ablation(df, output_dir)
 
-    plot_mean_teacher_consistency_ablation(df, output_dir)
+    # plot_mean_teacher_consistency_ablation(df, output_dir)
 
 if __name__ == "__main__":
     cwd = os.path.dirname(os.path.abspath(__file__))
