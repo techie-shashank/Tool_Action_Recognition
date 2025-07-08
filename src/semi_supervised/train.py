@@ -4,7 +4,7 @@ from logger import logger
 from semi_supervised.contrastive import train_contrastive
 from semi_supervised.pseudo_labeling import train_pseudo_labelling
 from semi_supervised.mean_teacher import train_mean_teacher
-from utils import config, train_model, get_weighted_sampler
+from utils import load_config, train_model, get_weighted_sampler
 
 
 def split_training_dataset(train_dataset, labeled_ratio=0.1):
@@ -20,6 +20,7 @@ def split_training_dataset(train_dataset, labeled_ratio=0.1):
     return random_split(train_dataset, [labeled_size, unlabeled_size])
 
 def train_semi_supervised(model, train_dataset, val_dataset, criterion, optimizer, device, num_epochs=10):
+    config = load_config()
     batch_size = config["batch_size"]
     labeled_dataset, unlabeled_dataset = split_training_dataset(
         train_dataset, labeled_ratio=config["semi_supervised"]["labelled_ratio"]

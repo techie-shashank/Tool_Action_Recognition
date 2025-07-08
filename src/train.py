@@ -14,7 +14,7 @@ from semi_supervised.train import train_semi_supervised
 from data.preprocessing import split_data, preprocess_signals, balance_data
 from visualization.plots import plot_and_save_training_curves, visualize_channel_attention
 from utils import load_data, get_weighted_sampler
-from utils import config, config_path, train_model, FocalLoss
+from utils import load_config, config_path, train_model, FocalLoss
 from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
 
@@ -52,6 +52,7 @@ def setup_model(model_name, time_steps, input_channels, num_classes, device):
 
 
 def train(model_name, X_train, y_train, X_val, y_val, le, experiment_dir):
+    config = load_config()
     batch_size = config["batch_size"]
     epochs = config["epochs"]
     data_balancing = config.get("data_balancing", [])
@@ -120,6 +121,7 @@ def train(model_name, X_train, y_train, X_val, y_val, le, experiment_dir):
 
 
 if __name__ == "__main__":
+    config = load_config()
     args = parse_arguments()
     experiments_dir = get_experiments_dir(args.model)
     log_path = os.path.join(experiments_dir, "train.log")

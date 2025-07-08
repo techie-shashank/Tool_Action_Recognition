@@ -448,15 +448,15 @@ def generate_all_plots(csv_path: str, output_dir: str = "plots"):
     title = "Per-Class F1 Scores for SSL Methods at 25% Labeled Data (Electric Screwdriver)"
     plot_ssl_per_class_performance(df, output_dir, [0.25], title)
 
-    # generate_ssl_comparison_table(df, output_dir)
+    generate_ssl_comparison_table(df, output_dir)
 
-    # plot_sensor_ablation_study(df, output_dir)
+    plot_sensor_ablation_study(df, output_dir)
 
-    # plot_confidence_threshold_ablation(df, output_dir)
+    plot_confidence_threshold_ablation(df, output_dir)
 
-    # plot_contrastive_augmentation_ablation(df, output_dir)
+    plot_contrastive_augmentation_ablation(df, output_dir)
 
-    # plot_mean_teacher_consistency_ablation(df, output_dir)
+    plot_mean_teacher_consistency_ablation(df, output_dir)
 
 if __name__ == "__main__":
     cwd = os.path.dirname(os.path.abspath(__file__))

@@ -1,1 +1,97 @@
 Run No.,model,tool,sensor,Data Ratio,data_balancing,semi_supervised,strategy,labelled_ratio,accuracy,macro_precision,macro_recall,macro_f1,f1_2,f1_3,f1_4,f1_5,f1_6,f1_7,f1_14,f1_25,f1_38,f1_8
+584,lstm,electric_screwdriver,all,0.1,oversample,"{""active"": false}",none,1.0,0.8971,0.3254,0.3562,0.3304,0.8303,0.7193,0.1176,0.0,0.0,0.0,0.0,,,0.9759
+585,lstm,electric_screwdriver,all,0.25,oversample,"{""active"": false}",none,1.0,0.9055,0.3768,0.4341,0.3971,0.8148,0.7463,0.6383,0.0,0.0,0.0,0.0,,,0.9771
+586,lstm,electric_screwdriver,all,0.5,oversample,"{""active"": false}",none,1.0,0.8869,0.5909,0.7558,0.6241,0.7783,0.8431,0.6261,0.6538,0.3478,0.3824,0.4,,,0.961
+587,lstm,electric_screwdriver,all,0.75,oversample,"{""active"": false}",none,1.0,0.9203,0.7344,0.8432,0.7729,0.8839,0.8491,0.7312,0.7857,0.3846,0.5806,1.0,,,0.9679
+588,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": false}",none,1.0,0.9147,0.7385,0.8341,0.765,0.79,0.8544,0.614,0.7368,0.4286,0.72,1.0,,,0.9763
+589,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.1, ""strategy"": ""pseudo_labeling""}",pseudo_labeling,0.1,0.8795,0.5739,0.8006,0.6222,0.8745,0.8136,0.6667,0.4681,0.2143,0.5938,0.4,,,0.9471
+590,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.25, ""strategy"": ""pseudo_labeling""}",pseudo_labeling,0.25,0.911,0.672,0.8274,0.7184,0.8996,0.8909,0.7209,0.8235,0.186,0.6,0.6667,,,0.9594
+591,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.5, ""strategy"": ""pseudo_labeling""}",pseudo_labeling,0.5,0.9082,0.6309,0.821,0.6826,0.8269,0.8544,0.6286,0.7143,0.3333,0.6333,0.5,,,0.9698
+592,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.75, ""strategy"": ""pseudo_labeling""}",pseudo_labeling,0.75,0.937,0.7898,0.7677,0.7605,0.8983,0.8696,0.7,0.6977,0.3077,0.6296,1.0,,,0.9808
+593,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.1, ""strategy"": ""contrastive""}",contrastive,0.1,0.7961,0.5316,0.8009,0.5451,0.7368,0.8085,0.6142,0.6769,0.1163,0.3762,0.1333,,,0.8986
+594,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.25, ""strategy"": ""contrastive""}",contrastive,0.25,0.8693,0.5989,0.8015,0.6234,0.7033,0.7442,0.6,0.6667,0.2041,0.6102,0.5,,,0.9587
+595,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.5, ""strategy"": ""contrastive""}",contrastive,0.5,0.8823,0.6261,0.7965,0.6625,0.7128,0.8235,0.5781,0.6786,0.2326,0.6429,0.6667,,,0.9646
+596,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.75, ""strategy"": ""contrastive""}",contrastive,0.75,0.9184,0.7399,0.7923,0.7444,0.8365,0.8547,0.6852,0.7273,0.3,0.5763,1.0,,,0.975
+597,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.1, ""strategy"": ""mean_teacher""}",mean_teacher,0.1,0.9101,0.6447,0.8564,0.6982,0.9099,0.8649,0.7556,0.7451,0.3077,0.5429,0.5,,,0.9599
+598,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.25, ""strategy"": ""mean_teacher""}",mean_teacher,0.25,0.9018,0.6599,0.8394,0.7019,0.8119,0.8807,0.6667,0.7347,0.2791,0.6102,0.6667,,,0.9652
+599,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.5, ""strategy"": ""mean_teacher""}",mean_teacher,0.5,0.911,0.7222,0.8581,0.7595,0.8909,0.8679,0.7629,0.7037,0.2857,0.6032,1.0,,,0.9619
+600,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.75, ""strategy"": ""mean_teacher""}",mean_teacher,0.75,0.8953,0.63,0.8062,0.6764,0.8159,0.8519,0.6786,0.6792,0.2424,0.5143,0.6667,,,0.962
+603,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""consistency_weight"": 0.1, ""labelled_ratio"": 0.25, ""strategy"": ""mean_teacher""}",mean_teacher,0.25,0.9018,0.6512,0.8315,0.6964,0.7755,0.8704,0.6102,0.7059,0.3871,0.5846,0.6667,,,0.971
+604,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""consistency_weight"": 0.5, ""labelled_ratio"": 0.25, ""strategy"": ""mean_teacher""}",mean_teacher,0.25,0.9175,0.7395,0.8382,0.7666,0.8235,0.8889,0.6667,0.7692,0.4286,0.5818,1.0,,,0.9737
+605,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""consistency_weight"": 0.75, ""labelled_ratio"": 0.25, ""strategy"": ""mean_teacher""}",mean_teacher,0.25,0.9203,0.6686,0.808,0.7145,0.8704,0.8598,0.701,0.7308,0.2857,0.6296,0.6667,,,0.9719
+606,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""consistency_weight"": 1.0, ""labelled_ratio"": 0.25, ""strategy"": ""mean_teacher""}",mean_teacher,0.25,0.9018,0.6599,0.8394,0.7019,0.8119,0.8807,0.6667,0.7347,0.2791,0.6102,0.6667,,,0.9652
+607,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""consistency_weight"": 1.5, ""labelled_ratio"": 0.25, ""strategy"": ""mean_teacher""}",mean_teacher,0.25,0.911,0.6664,0.8425,0.7143,0.8638,0.8571,0.7184,0.7083,0.3243,0.6102,0.6667,,,0.9653
+608,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""consistency_weight"": 3.0, ""labelled_ratio"": 0.25, ""strategy"": ""mean_teacher""}",mean_teacher,0.25,0.9082,0.6619,0.8358,0.7123,0.8325,0.8807,0.6604,0.8077,0.2941,0.5902,0.6667,,,0.9659
+609,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""contrastive_augmentations"": [""jitter""], ""labelled_ratio"": 0.25, ""strategy"": ""contrastive""}",contrastive,0.25,0.8693,0.5989,0.8015,0.6234,0.7033,0.7442,0.6,0.6667,0.2041,0.6102,0.5,,,0.9587
+610,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""contrastive_augmentations"": [""scaling""], ""labelled_ratio"": 0.25, ""strategy"": ""contrastive""}",contrastive,0.25,0.8693,0.5989,0.8015,0.6234,0.7033,0.7442,0.6,0.6667,0.2041,0.6102,0.5,,,0.9587
+611,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""contrastive_augmentations"": [""gaussian_noise""], ""labelled_ratio"": 0.25, ""strategy"": ""contrastive""}",contrastive,0.25,0.8693,0.5989,0.8015,0.6234,0.7033,0.7442,0.6,0.6667,0.2041,0.6102,0.5,,,0.9587
+612,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""contrastive_augmentations"": [""magnitude_scaling""], ""labelled_ratio"": 0.25, ""strategy"": ""contrastive""}",contrastive,0.25,0.8693,0.5989,0.8015,0.6234,0.7033,0.7442,0.6,0.6667,0.2041,0.6102,0.5,,,0.9587
+613,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""contrastive_augmentations"": [""time_warp""], ""labelled_ratio"": 0.25, ""strategy"": ""contrastive""}",contrastive,0.25,0.8693,0.5989,0.8015,0.6234,0.7033,0.7442,0.6,0.6667,0.2041,0.6102,0.5,,,0.9587
+614,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""contrastive_augmentations"": [""jitter"", ""scaling""], ""labelled_ratio"": 0.25, ""strategy"": ""contrastive""}",contrastive,0.25,0.8693,0.5989,0.8015,0.6234,0.7033,0.7442,0.6,0.6667,0.2041,0.6102,0.5,,,0.9587
+615,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""contrastive_augmentations"": [""jitter"", ""gaussian_noise"", ""magnitude_scaling""], ""labelled_ratio"": 0.25, ""strategy"": ""contrastive""}",contrastive,0.25,0.8693,0.5989,0.8015,0.6234,0.7033,0.7442,0.6,0.6667,0.2041,0.6102,0.5,,,0.9587
+616,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""contrastive_augmentations"": [""jitter"", ""gaussian_noise"", ""time_warp""], ""labelled_ratio"": 0.25, ""strategy"": ""contrastive""}",contrastive,0.25,0.8693,0.5989,0.8015,0.6234,0.7033,0.7442,0.6,0.6667,0.2041,0.6102,0.5,,,0.9587
+617,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""contrastive_augmentations"": [""jitter"", ""scaling"", ""gaussian_noise"", ""magnitude_scaling"", ""time_warp""], ""labelled_ratio"": 0.25, ""strategy"": ""contrastive""}",contrastive,0.25,0.8693,0.5989,0.8015,0.6234,0.7033,0.7442,0.6,0.6667,0.2041,0.6102,0.5,,,0.9587
+618,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.25, ""strategy"": ""pseudo_labeling"", ""threshold"": 0.1}",pseudo_labeling,0.25,0.8842,0.6819,0.7678,0.6787,0.7864,0.5946,0.6549,0.5679,0.2162,0.6429,1.0,,,0.9666
+619,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.25, ""strategy"": ""pseudo_labeling"", ""threshold"": 0.2}",pseudo_labeling,0.25,0.8842,0.6819,0.7678,0.6787,0.7864,0.5946,0.6549,0.5679,0.2162,0.6429,1.0,,,0.9666
+620,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.25, ""strategy"": ""pseudo_labeling"", ""threshold"": 0.3}",pseudo_labeling,0.25,0.8842,0.6819,0.7678,0.6787,0.7864,0.5946,0.6549,0.5679,0.2162,0.6429,1.0,,,0.9666
+621,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.25, ""strategy"": ""pseudo_labeling"", ""threshold"": 0.4}",pseudo_labeling,0.25,0.8554,0.6544,0.7847,0.6557,0.7347,0.641,0.6066,0.5641,0.2264,0.5217,1.0,,,0.9513
+622,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.25, ""strategy"": ""pseudo_labeling"", ""threshold"": 0.5}",pseudo_labeling,0.25,0.8017,0.5739,0.7621,0.5755,0.618,0.641,0.5468,0.5823,0.1277,0.5,0.6667,,,0.9217
+623,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.25, ""strategy"": ""pseudo_labeling"", ""threshold"": 0.6}",pseudo_labeling,0.25,0.8823,0.6958,0.8236,0.7247,0.8531,0.8364,0.7059,0.7037,0.1613,0.5902,1.0,,,0.9473
+624,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.25, ""strategy"": ""pseudo_labeling"", ""threshold"": 0.7}",pseudo_labeling,0.25,0.8934,0.6979,0.8343,0.7302,0.8622,0.8041,0.7097,0.6333,0.2545,0.6207,1.0,,,0.9566
+625,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.25, ""strategy"": ""pseudo_labeling"", ""threshold"": 0.8}",pseudo_labeling,0.25,0.8916,0.7005,0.8242,0.7239,0.7716,0.8,0.6325,0.6769,0.2667,0.6792,1.0,,,0.9646
+626,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.25, ""strategy"": ""pseudo_labeling"", ""threshold"": 0.9}",pseudo_labeling,0.25,0.911,0.672,0.8274,0.7184,0.8996,0.8909,0.7209,0.8235,0.186,0.6,0.6667,,,0.9594
+627,lstm,electric_screwdriver,all,1.0,oversample,"{""active"": true, ""labelled_ratio"": 0.25, ""strategy"": ""pseudo_labeling"", ""threshold"": 1.0}",pseudo_labeling,0.25,0.8313,0.5844,0.7643,0.6171,0.7885,0.75,0.6486,0.5588,0.093,0.507,0.6667,,,0.9245
+630,lstm,pneumatic_screwdriver,all,1.0,oversample,"{""active"": false}",none,1.0,0.9141,0.5594,0.6681,0.5941,0.8085,0.8738,0.4,0.5556,,0.3929,0.4706,,0.2857,0.9657
+631,lstm,pneumatic_rivet_gun,all,1.0,oversample,"{""active"": false}",none,1.0,0.971,0.4875,0.6539,0.5405,,,,,,0.2979,,0.3333,0.5455,0.9855
+632,lstm,pneumatic_rivet_gun,acc,1.0,oversample,"{""active"": false}",none,1.0,0.9768,0.4781,0.5578,0.5092,,,,,,0.8889,,0.0,0.16,0.9881
+633,lstm,pneumatic_rivet_gun,gyr,1.0,oversample,"{""active"": false}",none,1.0,0.9754,0.5193,0.6448,0.558,,,,,,0.9286,,0.0,0.3158,0.9877
+634,lstm,pneumatic_rivet_gun,mag,1.0,oversample,"{""active"": false}",none,1.0,0.9576,0.4212,0.7396,0.4598,,,,,,0.7857,,0.0,0.0755,0.9781
+635,lstm,pneumatic_rivet_gun,mic,1.0,oversample,"{""active"": false}",none,1.0,0.9554,0.5854,0.669,0.5458,,,,,,0.254,,0.6667,0.2857,0.977
+636,lstm,pneumatic_rivet_gun,"acc,gyr",1.0,oversample,"{""active"": false}",none,1.0,0.9704,0.4399,0.4623,0.4493,,,,,,0.7407,,0.0,0.0714,0.9849
+637,lstm,pneumatic_rivet_gun,"acc,mag",1.0,oversample,"{""active"": false}",none,1.0,0.9222,0.2624,0.4029,0.2661,,,,,,0.0548,,0.0,0.05,0.9594
+638,lstm,pneumatic_rivet_gun,"acc,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9603,0.3685,0.5645,0.4163,,,,,,0.2857,,0.0,0.4,0.9796
+639,lstm,pneumatic_rivet_gun,"gyr,mag",1.0,oversample,"{""active"": false}",none,1.0,0.9632,0.2792,0.3336,0.2918,,,,,,0.186,,0.0,0.0,0.9812
+640,lstm,pneumatic_rivet_gun,"gyr,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9596,0.3477,0.4764,0.3801,,,,,,0.2333,,0.0,0.3077,0.9793
+641,lstm,pneumatic_rivet_gun,"mag,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9667,0.6137,0.6718,0.5791,,,,,,0.3137,,0.6667,0.3529,0.9829
+642,lstm,pneumatic_rivet_gun,"acc,gyr,mag",1.0,oversample,"{""active"": false}",none,1.0,0.9604,0.2887,0.3554,0.3045,,,,,,0.2381,,0.0,0.0,0.9801
+643,lstm,pneumatic_rivet_gun,"acc,gyr,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9596,0.5966,0.6891,0.5615,,,,,,0.3,,0.6667,0.3,0.9792
+644,lstm,pneumatic_rivet_gun,"acc,mag,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9724,0.6791,0.6733,0.6311,,,,,,0.3265,,0.6667,0.5455,0.9859
+645,lstm,pneumatic_rivet_gun,"gyr,mag,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9497,0.5837,0.6368,0.5353,,,,,,0.2338,,0.6667,0.2667,0.974
+646,lstm,pneumatic_rivet_gun,"acc,gyr,mag,mic",1.0,oversample,"{""active"": false}",none,1.0,0.971,0.4875,0.6539,0.5405,,,,,,0.2979,,0.3333,0.5455,0.9855
+647,lstm,electric_screwdriver,acc,1.0,oversample,"{""active"": false}",none,1.0,0.9101,0.6647,0.6983,0.6703,0.8506,0.7477,0.5556,0.6275,0.303,0.9091,0.4,,,0.9687
+648,lstm,electric_screwdriver,gyr,1.0,oversample,"{""active"": false}",none,1.0,0.8596,0.6835,0.7897,0.7005,0.8142,0.8571,0.2817,0.7143,0.5517,0.9565,0.5,,,0.9287
+649,lstm,electric_screwdriver,mag,1.0,oversample,"{""active"": false}",none,1.0,0.8718,0.552,0.6919,0.584,0.8106,0.8333,0.5,0.6,0.6667,0.3095,0.0,,,0.9516
+650,lstm,electric_screwdriver,mic,1.0,oversample,"{""active"": false}",none,1.0,0.9073,0.6245,0.777,0.6652,0.8213,0.8039,0.6355,0.7018,0.1935,0.6939,0.5,,,0.9719
+651,lstm,electric_screwdriver,"acc,gyr",1.0,oversample,"{""active"": false}",none,1.0,0.9339,0.7987,0.7709,0.7685,0.8784,0.8081,0.716,0.6923,0.4516,0.9565,0.6667,,,0.978
+652,lstm,electric_screwdriver,"acc,mag",1.0,oversample,"{""active"": false}",none,1.0,0.4179,0.1616,0.2042,0.1613,0.2439,0.1111,0.1274,0.1176,0.0,0.0984,0.0,,,0.5918
+653,lstm,electric_screwdriver,"acc,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9147,0.7255,0.8069,0.7441,0.8276,0.8496,0.6909,0.6667,0.3636,0.5806,1.0,,,0.9737
+654,lstm,electric_screwdriver,"gyr,mag",1.0,oversample,"{""active"": false}",none,1.0,0.4585,0.1526,0.1946,0.1547,0.2,0.119,0.069,0.0333,0.0889,0.0816,0.0,,,0.6454
+655,lstm,electric_screwdriver,"gyr,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9184,0.7514,0.8023,0.754,0.8218,0.8596,0.6667,0.7111,0.3448,0.6522,1.0,,,0.9758
+656,lstm,electric_screwdriver,"mag,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9222,0.7597,0.7931,0.7627,0.8,0.8649,0.6491,0.7347,0.4211,0.6522,1.0,,,0.9796
+657,lstm,electric_screwdriver,"acc,gyr,mag",1.0,oversample,"{""active"": false}",none,1.0,0.4483,0.161,0.1929,0.1622,0.2343,0.0982,0.1406,0.1493,0.0,0.0488,0.0,,,0.6264
+658,lstm,electric_screwdriver,"acc,gyr,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9166,0.7374,0.8186,0.7563,0.8177,0.8519,0.6726,0.72,0.3333,0.68,1.0,,,0.975
+659,lstm,electric_screwdriver,"acc,mag,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9175,0.7262,0.7756,0.7352,0.8137,0.8785,0.6491,0.76,0.2222,0.5818,1.0,,,0.9764
+660,lstm,electric_screwdriver,"gyr,mag,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9101,0.731,0.8403,0.7553,0.8177,0.8649,0.6786,0.7451,0.3,0.6667,1.0,,,0.9698
+661,lstm,electric_screwdriver,"acc,gyr,mag,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9147,0.7385,0.8341,0.765,0.79,0.8544,0.614,0.7368,0.4286,0.72,1.0,,,0.9763
+662,lstm,pneumatic_screwdriver,acc,1.0,oversample,"{""active"": false}",none,1.0,0.9345,0.7269,0.8349,0.7646,0.8352,0.5882,0.7273,0.8421,,0.7586,0.7273,,0.6667,0.9715
+663,lstm,pneumatic_screwdriver,gyr,1.0,oversample,"{""active"": false}",none,1.0,0.9398,0.7269,0.7505,0.7336,0.7529,0.7229,0.8,0.75,,0.8148,0.72,,0.3333,0.9749
+664,lstm,pneumatic_screwdriver,mag,1.0,oversample,"{""active"": false}",none,1.0,0.7022,0.3276,0.606,0.3866,0.4507,0.3757,0.24,0.2143,,0.5714,0.2424,,0.1818,0.8161
+665,lstm,pneumatic_screwdriver,mic,1.0,oversample,"{""active"": false}",none,1.0,0.9158,0.5988,0.6836,0.6158,0.8158,0.8713,0.625,0.5,,0.4444,0.4286,,0.2759,0.9656
+666,lstm,pneumatic_screwdriver,"acc,gyr",1.0,oversample,"{""active"": false}",none,1.0,0.9409,0.741,0.8095,0.7558,0.7957,0.6588,0.7826,0.8235,,0.8148,0.5263,,0.6667,0.9779
+667,lstm,pneumatic_screwdriver,"acc,mag",1.0,oversample,"{""active"": false}",none,1.0,0.5228,0.1496,0.2373,0.1513,0.0698,0.1096,0.1176,0.0556,,0.0455,0.0,,0.1176,0.6949
+668,lstm,pneumatic_screwdriver,"acc,mic",1.0,oversample,"{""active"": false}",none,1.0,0.905,0.5246,0.6513,0.5672,0.7397,0.8478,0.2667,0.4762,,0.3934,0.4,,0.4516,0.9624
+669,lstm,pneumatic_screwdriver,"gyr,mag",1.0,oversample,"{""active"": false}",none,1.0,0.5946,0.1348,0.146,0.1323,0.058,0.062,0.0,0.087,,0.0952,0.0,,0.0,0.7565
+670,lstm,pneumatic_screwdriver,"gyr,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9039,0.577,0.7175,0.6272,0.7467,0.8421,0.5714,0.6667,,0.303,0.4615,,0.4667,0.9597
+671,lstm,pneumatic_screwdriver,"mag,mic",1.0,oversample,"{""active"": false}",none,1.0,0.8848,0.5058,0.6493,0.5401,0.7885,0.8155,0.4286,0.4762,,0.3284,0.2667,,0.2667,0.9502
+672,lstm,pneumatic_screwdriver,"acc,gyr,mag",1.0,oversample,"{""active"": false}",none,1.0,0.5554,0.1502,0.233,0.1536,0.0559,0.0828,0.1613,0.0769,,0.1277,0.0,,0.0,0.7246
+673,lstm,pneumatic_screwdriver,"acc,gyr,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9093,0.6068,0.7131,0.6378,0.8434,0.8485,0.4615,0.4,,0.4062,0.7273,,0.4571,0.9582
+674,lstm,pneumatic_screwdriver,"acc,mag,mic",1.0,oversample,"{""active"": false}",none,1.0,0.913,0.5683,0.6615,0.6015,0.8085,0.8288,0.5,0.625,,0.4,0.4,,0.2857,0.9637
+675,lstm,pneumatic_screwdriver,"gyr,mag,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9033,0.5269,0.6759,0.5664,0.8387,0.8381,0.4,0.4545,,0.4286,0.3158,,0.2963,0.9594
+676,lstm,pneumatic_screwdriver,"acc,gyr,mag,mic",1.0,oversample,"{""active"": false}",none,1.0,0.9141,0.5594,0.6681,0.5941,0.8085,0.8738,0.4,0.5556,,0.3929,0.4706,,0.2857,0.9657
+677,lstm,electric_screwdriver,all,1.0,resample,"{""active"": false}",none,1.0,0.7702,0.4742,0.6873,0.4806,0.8417,0.7636,0.4194,0.2857,0.0909,0.3659,0.2,,,0.8776
+678,lstm,electric_screwdriver,all,1.0,augment,"{""active"": false}",none,1.0,0.9249,0.683,0.8119,0.722,0.886,0.8727,0.6582,0.717,0.3333,0.6667,0.6667,,,0.9751
+679,lstm,electric_screwdriver,all,1.0,weighted_sampling,"{""active"": false}",none,1.0,0.8563,0.6538,0.7471,0.6693,0.8476,0.7527,0.7037,0.597,0.08,0.4333,1.0,,,0.9397
+680,lstm,electric_screwdriver,all,1.0,focal_loss,"{""active"": false}",none,1.0,0.5162,0.4751,0.7291,0.4549,0.6257,0.7843,0.5405,0.4928,0.038,0.2345,0.2857,,,0.6376
+139,tcn,electric_screwdriver,all,1.0,oversample,"{""active"": false}",none,1.0,0.9194,0.7361,0.8119,0.7565,0.8545,0.875,0.6796,0.7083,0.381,0.5806,1.0,,,0.9731
+140,tcn,pneumatic_rivet_gun,all,1.0,oversample,"{""active"": false}",none,1.0,0.9731,0.3718,0.4871,0.4095,,,,,,0.5405,,0.0,0.1111,0.9863
+141,tcn,pneumatic_screwdriver,all,1.0,oversample,"{""active"": false}",none,1.0,0.912,0.5529,0.6767,0.5897,0.8302,0.88,0.5263,0.2857,,0.3636,0.625,,0.2424,0.9642

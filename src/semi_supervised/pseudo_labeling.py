@@ -1,19 +1,19 @@
+import os
+
 import numpy as np
 
 import torch
 from torch.utils.data import TensorDataset, random_split, DataLoader, ConcatDataset
 from logger import logger
-from utils import config, train_model
-import os
-import json
+from utils import load_config, train_model
 
 from utils import get_weighted_sampler
 
-config_path = os.path.join(r'../', "config.json")
-with open(config_path, 'r') as config_file:
-    config = json.load(config_file)
+from src.visualization.plots import plot_and_save_training_curves
+
 
 def generate_pseudo_labels(model, unlabeled_loader, device, threshold=None):
+    config = load_config()
     if threshold is None:
         semi_config = config.get("semi_supervised", {})
         threshold = semi_config.get("threshold", 0.9)
@@ -50,6 +50,7 @@ def generate_pseudo_labels(model, unlabeled_loader, device, threshold=None):
         return None
 
 def train_pseudo_labelling(model, labeled_loader, unlabeled_loader, val_loader, criterion, optimizer, device, num_epochs=10):
+    config = load_config()
     train_model(model, labeled_loader, val_loader, criterion, optimizer, device, num_epochs=num_epochs)
 
     # Generate pseudo-labels
@@ -70,6 +71,7 @@ def train_pseudo_labelling(model, labeled_loader, unlabeled_loader, val_loader, 
         )
 
         logger.info("Retraining on combined dataset...")
-        train_model(model, combined_loader, val_loader, criterion, optimizer, device, num_epochs=num_epochs)
+        metrics = train_model(model, combined_loader, val_loader, criterion, optimizer, device, num_epochs=num_epochs)
+        plot_and_save_training_curves(metrics, os.path.dirname(os.path.abspath(__file__)))
     else:
         logger.info("Skipping retraining due to no confident pseudo-labels.")

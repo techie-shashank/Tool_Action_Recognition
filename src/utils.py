@@ -16,10 +16,11 @@ import shutil
 
 from data.loader import ToolTrackingDataLoader
 
-# Load configuration
-config_path = os.path.join(r'../', "config.json")
-with open(config_path, 'r') as config_file:
-    config = json.load(config_file)
+
+config_path = os.path.join(os.path.dirname(__file__), "../config.json")
+def load_config():
+    with open(config_path, 'r') as f:
+        return json.load(f)
 
 
 def ensure_model_exists(model_type, saved_model_path):

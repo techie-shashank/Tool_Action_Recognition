@@ -48,15 +48,18 @@ def get_consistency_loss(student_logits, teacher_logits, loss_type="mse"):
 
 def train_mean_teacher(model, labeled_loader, unlabeled_loader, val_loader, criterion, optimizer, device,
                        consistency_weight=1.0, ema_decay=0.99, consistency_type="mse", num_epochs=10):
-    """
-    Train student and teacher jointly on labeled + unlabeled data.
-    Supervised loss on labeled data + consistency loss on unlabeled data.
-    """
+    import copy
+    import matplotlib.pyplot as plt
 
     teacher_model = copy.deepcopy(model)
     teacher_model.eval()
     for param in teacher_model.parameters():
         param.requires_grad = False
+
+    # Store losses for plotting
+    epoch_total_losses = []
+    epoch_supervised_losses = []
+    epoch_consistency_losses = []
 
     for epoch in range(num_epochs):
         model.train()
@@ -72,17 +75,13 @@ def train_mean_teacher(model, labeled_loader, unlabeled_loader, val_loader, crit
         for _ in range(num_batches):
             optimizer.zero_grad()
 
-            # Labeled batch
             try:
                 x_labeled, y_labeled = next(labeled_iter)
             except StopIteration:
                 labeled_iter = iter(labeled_loader)
                 x_labeled, y_labeled = next(labeled_iter)
+            x_labeled, y_labeled = x_labeled.to(device), y_labeled.to(device)
 
-            x_labeled = x_labeled.to(device)
-            y_labeled = y_labeled.to(device)
-
-            # Unlabeled batch
             try:
                 x_unlabeled, _ = next(unlabeled_iter)
             except StopIteration:
@@ -90,11 +89,9 @@ def train_mean_teacher(model, labeled_loader, unlabeled_loader, val_loader, crit
                 x_unlabeled, _ = next(unlabeled_iter)
             x_unlabeled = x_unlabeled.to(device)
 
-            # Forward pass student on labeled
             outputs_labeled = model(x_labeled)
             loss_supervised = criterion(outputs_labeled, y_labeled)
 
-            # Forward pass student and teacher on unlabeled
             outputs_unlabeled_student = model(x_unlabeled)
             with torch.no_grad():
                 outputs_unlabeled_teacher = teacher_model(x_unlabeled)
@@ -111,12 +108,31 @@ def train_mean_teacher(model, labeled_loader, unlabeled_loader, val_loader, crit
             supervised_loss_total += loss_supervised.item()
             consistency_loss_total += loss_consistency.item()
 
+        # Save losses for the epoch
         avg_loss = total_loss / num_batches
         avg_supervised = supervised_loss_total / num_batches
         avg_consistency = consistency_loss_total / num_batches
+
+        epoch_total_losses.append(avg_loss)
+        epoch_supervised_losses.append(avg_supervised)
+        epoch_consistency_losses.append(avg_consistency)
+
         logger.info(
             f"[Epoch {epoch + 1}] Total Loss: {avg_loss:.4f} "
             f"(Supervised: {avg_supervised:.4f}, Consistency: {avg_consistency:.4f})"
         )
 
     logger.info("Mean Teacher training finished.")
+
+    # Plot the learning curve
+    plt.figure(figsize=(8, 5))
+    plt.plot(epoch_total_losses, label="Total Loss")
+    plt.plot(epoch_supervised_losses, label="Supervised Loss")
+    plt.plot(epoch_consistency_losses, label="Consistency Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title("Mean Teacher Training Losses")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()

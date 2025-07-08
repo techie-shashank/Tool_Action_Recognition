@@ -10,8 +10,7 @@ from data.preprocessing import split_data, preprocess_signals
 from test import load_model, evaluate_model
 from utils import load_data
 from train import train, get_experiments_dir, balance_data
-from utils import config
-
+from utils import load_config
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -30,7 +29,9 @@ def set_seed(seed=42):
     torch.backends.cudnn.benchmark = False
 
 def train_and_test(model_name, tool_name, sensor_name):
+    config = load_config()
     set_seed()
+    print(config)
     experiments_dir = get_experiments_dir(model_name)
 
     log_path = os.path.join(experiments_dir, "main.log")

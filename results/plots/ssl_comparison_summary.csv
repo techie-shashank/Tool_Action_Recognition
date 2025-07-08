@@ -1,0 +1,5 @@
+method,10%,25%,50%,100%
+Contrastive,0.545,0.623,0.662,
+Mean Teacher,0.698,0.715,0.76,
+Pseudo_Labeling,0.622,0.682,0.683,
+Supervised,0.33,0.397,0.624,0.641

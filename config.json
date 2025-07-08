@@ -6,8 +6,8 @@
     "semi_supervised": {
         "active": false,
         "strategy": "mean_teacher",
-        "labelled_ratio": 0.25,
-        "consistency_weight": 1.5
+        "labelled_ratio": 0.1,
+        "consistency_weight": 0.5
     },
     "data_balancing": [
         "oversample"
