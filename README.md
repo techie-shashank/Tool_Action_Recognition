@@ -1,10 +1,14 @@
-# 🛠️ Tool-Tracking Data Visualizer
+# Tool Action Recognition on Multi-Sensor, Multi-Modal Time-Series Data
 
-The src/visualisation.py visualizes multi-sensor time-series data collected from hand-held tools, overlaid with annotated action labels. It supports data from tools like electric screwdrivers, pneumatic rivet guns, and more.
+This project focuses on **tool action recognition using deep and semi-supervised learning approaches** on **multi-sensor, multi-modal time-series data** collected from hand-held tools (e.g., electric screwdrivers, pneumatic rivet guns). The goal is to accurately identify tool actions while minimizing the need for labeled data, leveraging **semi-supervised LSTM and TCN models**.
 
-## 🚀 How to Run
+## Project Report
+📄 [View Full Project Report](https://drive.google.com/file/d/1bqeQpllP7lJRwUl940etnsmCzCODjktD/view?usp=sharing)
 
-To visualize the multi-sensor data along with action annotations, use the following command:
+## Key Highlights
+- Developed and evaluated **semi-supervised deep learning models** for temporal action recognition.
+- Demonstrated **strong generalization using only 10–25% labeled data**, emphasizing label-efficient training.
+- Implemented using **Python, PyTorch, and Jupyter notebooks** for reproducibility.
 
-```bash
-python src/visualisation.py --base_path "/path/to/tool-tracking-data" --tool "tool_name"
+
+
